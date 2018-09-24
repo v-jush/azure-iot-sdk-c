@@ -676,6 +676,10 @@ static void ScheduleWork_Thread_ForMultiplexing(void* iotHubClientHandle)
 {
     IOTHUB_CLIENT_CORE_INSTANCE* iotHubClientInstance = (IOTHUB_CLIENT_CORE_INSTANCE*)iotHubClientHandle;
 
+    /* Codes_SRS_IOTHUBCLIENT_01_037: [The thread created by IoTHubClient_SendEvent or IoTHubClient_SetMessageCallback shall call IoTHubClientCore_LL_DoWork every 1 ms.] */
+    /* Codes_SRS_IOTHUBCLIENT_01_039: [All calls to IoTHubClientCore_LL_DoWork shall be protected by the lock created in IotHubClient_Create.] */
+    IoTHubClientCore_LL_DoWork(iotHubClientInstance->IoTHubClientLLHandle);
+
     garbageCollectorImpl(iotHubClientInstance);
     if (Lock(iotHubClientInstance->LockHandle) == LOCK_OK)
     {

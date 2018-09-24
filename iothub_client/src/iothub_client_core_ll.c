@@ -1638,7 +1638,10 @@ void IoTHubClientCore_LL_DoWork(IOTHUB_CLIENT_CORE_LL_HANDLE iotHubClientHandle)
         }
 
         /*Codes_SRS_IOTHUBCLIENT_LL_02_021: [Otherwise, IoTHubClientCore_LL_DoWork shall invoke the underlaying layer's _DoWork function.]*/
-        handleData->IoTHubTransport_DoWork(handleData->transportHandle, iotHubClientHandle);
+        if (!handleData->isSharedTransport)
+        {
+            handleData->IoTHubTransport_DoWork(handleData->transportHandle, iotHubClientHandle);
+        }
     }
 }
 
