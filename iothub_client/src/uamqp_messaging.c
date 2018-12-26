@@ -29,6 +29,8 @@
 #define AMQP_DIAGNOSTIC_CONTEXT_KEY "Correlation-Context"
 #define AMQP_DIAGNOSTIC_CREATION_TIME_UTC_KEY "creationtimeutc"
 
+static const char* ANNOTATION_MODULE_INPUT_NAME = "x-opt-input-name";
+
 static int encode_callback(void* context, const unsigned char* bytes, size_t length)
 {
     BINARY_DATA* message_body_binary = (BINARY_DATA*)context;
@@ -311,6 +313,8 @@ static int create_application_properties_to_encode(MESSAGE_HANDLE message_batch_
     size_t property_count = 0;
     AMQP_VALUE uamqp_properties_map = NULL;
     int result;
+
+    // TODO (Binal): Get OutputName from IOTHUB_MESSAGE_HANDLE (IoTHubMessage_GetOutputName) and set into the AMQP message application properties ("iothub-outputname");
 
     if ((properties_map = IoTHubMessage_Properties(messageHandle)) == NULL)
     {
@@ -1071,6 +1075,101 @@ static int readApplicationPropertiesFromuAMQPMessage(IOTHUB_MESSAGE_HANDLE iothu
     return result;
 }
 
+static int readAnnotationsFromuAMQPMessage(IOTHUB_MESSAGE_HANDLE iothub_message_handle, MESSAGE_HANDLE uamqp_message)
+{
+    int result;
+    message_annotations amqp_msg_annotations;
+
+    // TODO (Binal): Write requirements
+    // TODO (Binal): add new tests to cover all new code in this module.
+
+    if (message_get_message_annotations(uamqp_message, &amqp_msg_annotations) != 0)
+    {
+        // Binal: log error
+        result = __FAILURE__;
+    }
+    else if (amqp_msg_annotations == NULL)
+    {
+        result = 0;
+    }
+    else
+    {
+        uint32_t pair_count;
+        if (amqpvalue_get_map_pair_count((AMQP_VALUE)amqp_msg_annotations, &pair_count) != 0)
+        {
+            LogError("Failed getting message annotations count");
+            result = __FAILURE__;
+        }
+        else
+        {
+            uint32_t i;
+
+            result = 0;
+
+            for (i = 0; i < pair_count; i++)
+            {
+                AMQP_VALUE amqp_map_key;
+                AMQP_VALUE amqp_map_value;
+
+                if (amqpvalue_get_map_key_value_pair((AMQP_VALUE)amqp_msg_annotations, i, &amqp_map_key, &amqp_map_value) != 0)
+                {
+                    LogError("Failed getting AMQP map key/value pair (%d)", i);
+                    result = __FAILURE__;
+                }
+                else
+                {
+                    const char* map_key_name;
+
+                    if (amqpvalue_get_symbol(amqp_map_key, &map_key_name) != 0)
+                    {
+                        LogError("Failed getting AMQP value symbol");
+                        result = __FAILURE__;
+                        break;
+                    }
+                    else
+                    {
+                        if (strcmp(ANNOTATION_MODULE_INPUT_NAME, map_key_name) == 0)
+                        {
+                            if (amqpvalue_get_type(amqp_map_value) != AMQP_TYPE_STRING) // TODO: Binal, verify if this is really string (check on Java, C#, or just run the code and break here and inspect).
+                            {
+                                // TODO (Binal): add logging
+                                result = __FAILURE__;
+                                break;
+                            }
+                            else
+                            {
+                                const char* inputName;
+
+                                if (amqpvalue_get_string(amqp_map_value, &inputName) != 0)
+                                {
+                                    // TODO (Binal): add logging
+                                    result = __FAILURE__;
+                                    break;
+                                }
+                                else if (IoTHubMessage_SetInputName(iothub_message_handle, inputName) != IOTHUB_MESSAGE_OK)
+                                {
+                                    // TODO Binal: log error
+                                    result = __FAILURE__;
+                                    break;
+                                }
+                            }
+                        }
+
+                        amqpvalue_destroy(amqp_map_value);
+                    }
+
+                    amqpvalue_destroy(amqp_map_key);
+                }
+            }
+        }
+
+        amqpvalue_destroy(amqp_msg_annotations);
+    }
+
+    return result;
+}
+
+
 int message_create_IoTHubMessage_from_uamqp_message(MESSAGE_HANDLE uamqp_message, IOTHUB_MESSAGE_HANDLE* iothubclient_message)
 {
     int result = __FAILURE__;
@@ -1119,6 +1218,12 @@ int message_create_IoTHubMessage_from_uamqp_message(MESSAGE_HANDLE uamqp_message
         else if (readApplicationPropertiesFromuAMQPMessage(iothub_message, uamqp_message) != RESULT_OK)
         {
             LogError("Failed reading application properties of the uamqp message.");
+            IoTHubMessage_Destroy(iothub_message);
+            result = __FAILURE__;
+        }
+        else if (readAnnotationsFromuAMQPMessage(iothub_message, uamqp_message) != RESULT_OK)
+        {
+            LogError("Failed reading annotations of the uamqp message.");
             IoTHubMessage_Destroy(iothub_message);
             result = __FAILURE__;
         }
