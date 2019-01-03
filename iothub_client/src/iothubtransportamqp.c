@@ -158,17 +158,15 @@ static IOTHUB_CLIENT_RESULT IoTHubTransportAMQP_SendMessageDisposition(MESSAGE_C
 
 static int IotHubTransportAMQP_Subscribe_InputQueue(IOTHUB_DEVICE_HANDLE handle)
 {
+    // To Do Binal - Change Requirement below, return Success
     // Codes_SRS_IOTHUBTRANSPORTAMQP_31_021: [IoTHubTransportAMQP_Subscribe_InputQueue shall return a failure as input queues are not implemented for AMQP]
-    (void)handle;
-    LogError("AMQP does not support input queues");
-    return __FAILURE__;
+    return RESULT_OK;
 }
 
 static void IotHubTransportAMQP_Unsubscribe_InputQueue(IOTHUB_DEVICE_HANDLE handle)
 {
-    // Codes_SRS_IOTHUBTRANSPORTAMQP_31_022: [IotHubTransportAMQP_Unsubscribe_InputQueue shall do nothing as input queues are not implemented for AMQP]
+    // To Do (Binal): Remove comment Codes_SRS_IOTHUBTRANSPORTAMQP_31_022: [IotHubTransportAMQP_Unsubscribe_InputQueue shall do nothing as input queues are not implemented for AMQP]
     (void)handle;
-    LogError("AMQP does not support input queues");
 }
 
 static int IoTHubTransportAMQP_SetCallbackContext(TRANSPORT_LL_HANDLE handle, void* ctx)

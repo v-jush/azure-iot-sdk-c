@@ -372,10 +372,40 @@ static int create_application_properties_to_encode(MESSAGE_HANDLE message_batch_
 
                     amqpvalue_destroy(map_property_key);
                     amqpvalue_destroy(map_property_value);
-                }
+                }                
 
                 if (RESULT_OK == result)
                 {
+                    // Code Below added by Binal
+                    const char* output_name_value = IoTHubMessage_GetOutputName(messageHandle);
+                    const char* output_name_key = "x-opt-input-name";
+                    AMQP_VALUE map_property_key;
+                    AMQP_VALUE map_property_value;
+
+                    if ((map_property_key = amqpvalue_create_string(output_name_key)) == NULL)
+                    {
+                        LogError("Failed amqpvalue_create_string for OutputName key");
+                        result = __FAILURE__;
+                    }
+
+                    if ((map_property_value = amqpvalue_create_string(output_name_value)) == NULL)
+                    {
+                        LogError("Failed amqpvalue_create_string for OutputName value");
+                        amqpvalue_destroy(map_property_key);
+                        result = __FAILURE__;
+                    }
+
+                    if (amqpvalue_set_map_value(uamqp_properties_map, map_property_key, map_property_value) != 0)
+                    {
+                        LogError("Failed amqpvalue_set_map_value");
+                        amqpvalue_destroy(map_property_key);
+                        amqpvalue_destroy(map_property_value);
+                        result = __FAILURE__;
+                    }
+
+                    amqpvalue_destroy(map_property_key);
+                    amqpvalue_destroy(map_property_value);
+
                     if ((*application_properties = amqpvalue_create_application_properties(uamqp_properties_map)) == NULL)
                     {
                         LogError("Failed amqpvalue_create_application_properties");
