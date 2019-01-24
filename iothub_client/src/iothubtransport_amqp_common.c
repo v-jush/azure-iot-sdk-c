@@ -472,6 +472,24 @@ static DEVICE_MESSAGE_DISPOSITION_RESULT on_message_received(IOTHUB_MESSAGE_HAND
         LogError("Failed processing message received (failed to assemble callback info)");
         device_disposition_result = DEVICE_MESSAGE_DISPOSITION_RESULT_RELEASED;
     }
+    else if (IoTHubMessage_GetInputName(message) != NULL)
+    {
+        //Set message cb for the InputQ
+        if (amqp_device_instance->transport_callbacks.msg_input_cb(message_data, amqp_device_instance->transport_ctx) != true)
+        {
+            // Codes_SRS_IOTHUBTRANSPORT_AMQP_COMMON_09_090: [If IoTHubClientCore_LL_MessageCallback() fails, on_message_received_callback shall return DEVICE_MESSAGE_DISPOSITION_RESULT_RELEASED]
+            LogError("Failed processing message received (IoTHubClientCore_LL_MessageCallback failed)");
+            IoTHubMessage_Destroy(message);
+            MESSAGE_CALLBACK_INFO_Destroy(message_data);
+            device_disposition_result = DEVICE_MESSAGE_DISPOSITION_RESULT_RELEASED;
+        }
+        else
+        {
+            // Codes_SRS_IOTHUBTRANSPORT_AMQP_COMMON_09_091: [If IoTHubClientCore_LL_MessageCallback() succeeds, on_message_received_callback shall return DEVICE_MESSAGE_DISPOSITION_RESULT_NONE]
+            device_disposition_result = DEVICE_MESSAGE_DISPOSITION_RESULT_NONE;
+        }
+        //ToDo Binal
+    }
     else
     {
         // Codes_SRS_IOTHUBTRANSPORT_AMQP_COMMON_09_089: [IoTHubClientCore_LL_MessageCallback() shall be invoked passing the client and the incoming message handles as parameters]

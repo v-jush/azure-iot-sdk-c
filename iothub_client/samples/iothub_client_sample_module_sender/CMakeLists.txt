@@ -34,8 +34,17 @@ include_directories(.)
 
 add_executable(iothub_client_sample_module_sender ${iothub_client_sample_module_sender_c_files} ${iothub_client_sample_module_sender_h_files} ${samples_cert_file})
 
-target_link_libraries(iothub_client_sample_module_sender
-    iothub_client_mqtt_transport
-    iothub_client
-)
+target_link_libraries(iothub_client_sample_module_sender iothub_client)
+
+if(${use_amqp})
+        target_link_libraries(iothub_client_sample_module_sender iothub_client_amqp_transport iothub_client_amqp_ws_transport)
+        linkUAMQP(iothub_client_sample_module_sender)
+        add_definitions(-DUSE_AMQP)
+endif()
+
+if(${use_mqtt})
+        target_link_libraries(iothub_client_sample_module_sender iothub_client_mqtt_transport iothub_client_mqtt_ws_transport)
+        linkMqttLibrary(iothub_client_sample_module_sender)
+        add_definitions(-DUSE_MQTT)
+endif()
 

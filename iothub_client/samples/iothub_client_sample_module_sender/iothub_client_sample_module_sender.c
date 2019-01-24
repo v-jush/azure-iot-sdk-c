@@ -11,6 +11,7 @@
 #include "azure_c_shared_utility/platform.h"
 #include "azure_c_shared_utility/shared_util_options.h"
 #include "iothub_client_options.h"
+#include "iothubtransportamqp.h"
 #include "iothubtransportmqtt.h"
 #include "iothub.h"
 
@@ -53,15 +54,16 @@ int main(void)
         (void)printf("Failed to initialize the platform.\r\n");
         return 1;
     }
-    else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(MQTT_Protocol)) == NULL)
+	//else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(MQTT_Protocol)) == NULL)
+	else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(AMQP_Protocol)) == NULL)
     {
         (void)printf("ERROR: iotHubModuleClientHandle is NULL!\r\n");
     }
     else
     {
         // Uncomment the following lines to enable verbose logging (e.g., for debugging).
-        // bool traceOn = true;
-        // IoTHubModuleClient_LL_SetOption(iotHubModuleClientHandle, OPTION_LOG_TRACE, &traceOn);
+        bool traceOn = true;
+        IoTHubModuleClient_LL_SetOption(iotHubModuleClientHandle, OPTION_LOG_TRACE, &traceOn);
 
         size_t iterator = 0;
         double temperature = 0;

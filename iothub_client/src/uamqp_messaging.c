@@ -378,7 +378,7 @@ static int create_application_properties_to_encode(MESSAGE_HANDLE message_batch_
                 {
                     // Code Below added by Binal
                     const char* output_name_value = IoTHubMessage_GetOutputName(messageHandle);
-                    const char* output_name_key = "x-opt-input-name";
+                    const char* output_name_key = "iothub-outputname";
                     AMQP_VALUE map_property_key;
                     AMQP_VALUE map_property_value;
 

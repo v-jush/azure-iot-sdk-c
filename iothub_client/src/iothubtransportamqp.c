@@ -158,9 +158,7 @@ static IOTHUB_CLIENT_RESULT IoTHubTransportAMQP_SendMessageDisposition(MESSAGE_C
 
 static int IotHubTransportAMQP_Subscribe_InputQueue(IOTHUB_DEVICE_HANDLE handle)
 {
-    // To Do Binal - Change Requirement below, return Success
-    // Codes_SRS_IOTHUBTRANSPORTAMQP_31_021: [IoTHubTransportAMQP_Subscribe_InputQueue shall return a failure as input queues are not implemented for AMQP]
-    return RESULT_OK;
+	return IoTHubTransportAMQP_Subscribe(handle);
 }
 
 static void IotHubTransportAMQP_Unsubscribe_InputQueue(IOTHUB_DEVICE_HANDLE handle)

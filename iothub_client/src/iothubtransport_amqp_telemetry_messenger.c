@@ -27,6 +27,7 @@
 #define IOTHUB_DEVICES_MODULE_PATH_FMT                  "%s/devices/%s/modules/%s"
 #define IOTHUB_EVENT_SEND_ADDRESS_FMT                   "amqps://%s/messages/events"
 #define IOTHUB_MESSAGE_RECEIVE_ADDRESS_FMT              "amqps://%s/messages/devicebound"
+#define IOTHUB_MODULE_RECEIVE_ADDRESS_FMT               "amqps://%s/messages/events"
 #define MESSAGE_SENDER_LINK_NAME_PREFIX                 "link-snd"
 #define MESSAGE_SENDER_MAX_LINK_SIZE                    UINT64_MAX
 #define MESSAGE_RECEIVER_LINK_NAME_PREFIX               "link-rcv"
@@ -217,9 +218,9 @@ static STRING_HANDLE create_event_sender_source_name(STRING_HANDLE link_name)
     return source_name;
 }
 
-static STRING_HANDLE create_message_receive_address(STRING_HANDLE devices_and_modules_path)
+static STRING_HANDLE create_message_receive_address(STRING_HANDLE devices_and_modules_path, bool isModule)
 {
-    STRING_HANDLE message_receive_address;
+    STRING_HANDLE message_receive_address; 
 
     if ((message_receive_address = STRING_new()) == NULL)
     {
@@ -228,14 +229,14 @@ static STRING_HANDLE create_message_receive_address(STRING_HANDLE devices_and_mo
     else
     {
         const char* devices_and_modules_path_char_ptr = STRING_c_str(devices_and_modules_path);
-        if (STRING_sprintf(message_receive_address, IOTHUB_MESSAGE_RECEIVE_ADDRESS_FMT, devices_and_modules_path_char_ptr) != RESULT_OK)
+        if (STRING_sprintf(message_receive_address, isModule ? IOTHUB_MODULE_RECEIVE_ADDRESS_FMT : IOTHUB_MESSAGE_RECEIVE_ADDRESS_FMT, devices_and_modules_path_char_ptr) != RESULT_OK)
         {
             STRING_delete(message_receive_address);
             message_receive_address = NULL;
             LogError("Failed creating the message_receive_address (STRING_sprintf failed)");
         }
     }
-
+    
     return message_receive_address;
 }
 
@@ -698,7 +699,7 @@ static int create_message_receiver(TELEMETRY_MESSENGER_INSTANCE* instance)
         LogError("Failed creating the message receiver (failed creating the 'devices_and_modules_path')");
     }
     // Codes_SRS_IOTHUBTRANSPORT_AMQP_MESSENGER_09_070: [A variable, named `message_receive_address`, shall be created concatenating "amqps://", `devices_and_modules_path` and "/messages/devicebound"]
-    else if ((message_receive_address = create_message_receive_address(devices_and_modules_path)) == NULL)
+    else if ((message_receive_address = create_message_receive_address(devices_and_modules_path, (instance->module_id != NULL))) == NULL)
     {
         // Codes_SRS_IOTHUBTRANSPORT_AMQP_MESSENGER_09_071: [If `message_receive_address` fails to be created, telemetry_messenger_do_work() shall fail and return]
         result = __FAILURE__;

@@ -12,6 +12,7 @@
 #include "azure_c_shared_utility/platform.h"
 #include "azure_c_shared_utility/shared_util_options.h"
 #include "iothubtransportmqtt.h"
+#include "iothubtransportamqp.h"
 #include "iothub.h"
 
 typedef struct FILTERED_MESSAGE_INSTANCE_TAG
@@ -182,15 +183,16 @@ static IOTHUB_MODULE_CLIENT_LL_HANDLE InitializeConnectionForFilter()
         (void)printf("Failed to initialize the platform.\r\n");
         iotHubModuleClientHandle = NULL;
     }
-    else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(MQTT_Protocol)) == NULL)
+	//else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(MQTT_Protocol)) == NULL)
+	else if ((iotHubModuleClientHandle = IoTHubModuleClient_LL_CreateFromEnvironment(AMQP_Protocol)) == NULL)
     {
         (void)printf("ERROR: IoTHubModuleClient_LL_CreateFromEnvironment failed\r\n");
     }
     else
     {
         // Uncomment the following lines to enable verbose logging (e.g., for debugging).
-        // bool traceOn = true;
-        // IoTHubModuleClient_LL_SetOption(iotHubModuleClientHandle, OPTION_LOG_TRACE, &trace);
+        bool traceOn = true;
+        IoTHubModuleClient_LL_SetOption(iotHubModuleClientHandle, OPTION_LOG_TRACE, &traceOn);
     }
 
     return iotHubModuleClientHandle;
