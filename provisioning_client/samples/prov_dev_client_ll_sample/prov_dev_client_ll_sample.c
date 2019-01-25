@@ -1,356 +1,505 @@
-// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// CAVEAT: This sample is to demonstrate azure IoT client concepts only and is not a guide design principles or style
-// Checking of return codes and error values shall be omitted for brevity.  Please practice sound engineering practices
-// when writing production code.
+/*
+ *  Created on: Nov 26, 2018
+ *      Author: Roman Schneider
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
+//#include <unistd.h>
+#include <signal.h>
+//#include <getopt.h>
 
-#include "iothub.h"
-#include "iothub_message.h"
-#include "iothub_client_version.h"
-#include "azure_c_shared_utility/threadapi.h"
-#include "azure_c_shared_utility/tickcounter.h"
+#include "azureiot/iothub.h"
+#include "azureiot/iothub_client.h"
+#include "azureiot/iothub_client_options.h"
+#include "azureiot/iothub_client_version.h"
+#include "azureiot/iothubtransportamqp_websockets.h"
+#include "azureiot/iothubtransportmqtt.h"
+#include "azureiot/iothubtransportmqtt_websockets.h"
+#include "azureiot/iothubtransportamqp.h"
+
+#include <azure_c_shared_utility/platform.h>
 #include "azure_c_shared_utility/shared_util_options.h"
 #include "azure_c_shared_utility/http_proxy_io.h"
+#include "azure_c_shared_utility/threadapi.h"
 
-#include "iothub_device_client_ll.h"
-#include "iothub_client_options.h"
-#include "azure_prov_client/prov_device_ll_client.h"
+#include "azure_prov_client/prov_device_client.h"
 #include "azure_prov_client/prov_security_factory.h"
-
-#ifdef SET_TRUSTED_CERT_IN_SAMPLES
-#include "certs.h"
-#endif // SET_TRUSTED_CERT_IN_SAMPLES
-
-//
-// The protocol you wish to use should be uncommented
-//
-#define SAMPLE_MQTT
-//#define SAMPLE_MQTT_OVER_WEBSOCKETS
-//#define SAMPLE_AMQP
-//#define SAMPLE_AMQP_OVER_WEBSOCKETS
-//#define SAMPLE_HTTP
-
-#ifdef SAMPLE_MQTT
-#include "iothubtransportmqtt.h"
-#include "azure_prov_client/prov_transport_mqtt_client.h"
-#endif // SAMPLE_MQTT
-#ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-#include "iothubtransportmqtt_websockets.h"
-#include "azure_prov_client/prov_transport_mqtt_ws_client.h"
-#endif // SAMPLE_MQTT_OVER_WEBSOCKETS
-#ifdef SAMPLE_AMQP
-#include "iothubtransportamqp.h"
-#include "azure_prov_client/prov_transport_amqp_client.h"
-#endif // SAMPLE_AMQP
-#ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-#include "iothubtransportamqp_websockets.h"
 #include "azure_prov_client/prov_transport_amqp_ws_client.h"
-#endif // SAMPLE_AMQP_OVER_WEBSOCKETS
-#ifdef SAMPLE_HTTP
-#include "iothubtransportmqtt.h"
 #include "azure_prov_client/prov_transport_http_client.h"
-#endif // SAMPLE_HTTP
 
-#ifdef SET_TRUSTED_CERT_IN_SAMPLES
-#include "certs.h"
-#endif // SET_TRUSTED_CERT_IN_SAMPLES
+#define UNUSED(expr) do { (void)(expr); } while (0)
 
-// This sample is to demostrate iothub reconnection with provisioning and should not
-// be confused as production code
-
-DEFINE_ENUM_STRINGS(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_VALUE);
+    DEFINE_ENUM_STRINGS(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_VALUE);
 DEFINE_ENUM_STRINGS(PROV_DEVICE_REG_STATUS, PROV_DEVICE_REG_STATUS_VALUES);
 
-static const char* global_prov_uri = "global.azure-devices-provisioning.net";
-static const char* id_scope = "[ID Scope]";
-
+static bool g_registration_complete = false;
+static bool g_connection_complete = false;
 static bool g_use_proxy = false;
-static const char* PROXY_ADDRESS = "127.0.0.1";
+static const char* PROXY_ADDRESS = "10.0.2.2";
 
-#define PROXY_PORT                  8888
+#define PROXY_PORT                  3128
 #define MESSAGES_TO_SEND            2
 #define TIME_BETWEEN_MESSAGES       2
 
-typedef struct CLIENT_SAMPLE_INFO_TAG
-{
-    unsigned int sleep_time;
-    char* iothub_uri;
-    char* access_key_name;
-    char* device_key;
-    char* device_id;
-    int registration_complete;
-} CLIENT_SAMPLE_INFO;
+static char* g_iothub_uri;
+static char* g_device_id;
 
-typedef struct IOTHUB_CLIENT_SAMPLE_INFO_TAG
-{
-    int connected;
-    int stop_running;
-} IOTHUB_CLIENT_SAMPLE_INFO;
+static size_t g_messageTrackingId;
 
-static IOTHUBMESSAGE_DISPOSITION_RESULT receive_msg_callback(IOTHUB_MESSAGE_HANDLE message, void* user_context)
+static bool g_sending;
+static bool g_dps_reconnect = false;
+static size_t g_reconnect_cnt = 0;
+
+/* callback requests reconnect */
+static bool g_please_reconnect;
+
+// global Iothub & DPS variables
+HTTP_PROXY_OPTIONS g_http_proxy;
+char* g_prov_uri = "global.azure-devices-provisioning.net";
+char* g_id_scope = "0ne0001782C";
+bool g_traceOn = false;
+static IOTHUB_CLIENT_HANDLE iothubclient;
+static IOTHUB_CLIENT_TRANSPORT_PROVIDER  g_iothub_protocol = AMQP_Protocol_over_WebSocketsTls;
+
+static int connect_DPS();
+static int connect_IoTHub();
+static void set_iothub_protocol(const char* protocol);
+
+
+/******************************************************************************/
+
+static void msg_confirmation_callback(IOTHUB_CLIENT_CONFIRMATION_RESULT result,
+    void* data)
 {
-    (void)message;
-    IOTHUB_CLIENT_SAMPLE_INFO* iothub_info = (IOTHUB_CLIENT_SAMPLE_INFO*)user_context;
-    (void)printf("Stop message recieved from IoTHub\r\n");
-    iothub_info->stop_running = 1;
-    return IOTHUBMESSAGE_ACCEPTED;
+    size_t id = (size_t)data;
+
+    UNUSED(data);
+    printf("%s: result: %s for id %zd\n", __func__,
+        ENUM_TO_STRING(IOTHUB_CLIENT_CONFIRMATION_RESULT, result), id);
+}
+
+int method_invocation_callback(const char* method_name,
+    const unsigned char* payload, size_t size, unsigned char** response,
+    size_t* response_size, void* user_context) {
+
+    UNUSED(user_context);
+
+    printf("%s: %s payload_len = %zd\n", __func__, method_name, size);
+
+    *response = (unsigned char*)malloc(size);
+    *response_size = size;
+    memcpy(*response, payload, size);
+
+    return 0;
+}
+
+IOTHUBMESSAGE_DISPOSITION_RESULT msg_receive_callback(
+    IOTHUB_MESSAGE_HANDLE message, void* user_context)
+{
+
+    UNUSED(user_context);
+
+    IOTHUB_MESSAGE_RESULT msg_ret = IOTHUB_MESSAGE_OK;
+    const char* buf = "";
+    size_t buf_size = 0;
+    int cb_result = IOTHUB_CLIENT_IOTHUB_METHOD_STATUS_ERROR;
+
+    IOTHUBMESSAGE_CONTENT_TYPE payload_type =
+        IoTHubMessage_GetContentType(message);
+
+    switch (payload_type) {
+    case IOTHUBMESSAGE_BYTEARRAY:
+        msg_ret = IoTHubMessage_GetByteArray(
+            message, (const unsigned char**)&buf, &buf_size);
+        if (msg_ret != IOTHUB_MESSAGE_OK) {
+            printf("%s: binary message parsing failed!\n", __func__);
+        }
+        break;
+    case IOTHUBMESSAGE_STRING:
+        buf = IoTHubMessage_GetString(message);
+        if (buf != NULL) {
+            buf_size = strlen(buf);
+        }
+        else {
+            printf("%s: string message parsing failed!\n", __func__);
+        }
+        break;
+    case IOTHUBMESSAGE_UNKNOWN:
+    default:
+        printf("%s: Unknown Message content type!\n", __func__);
+    }
+
+    if (buf != NULL) {
+        printf("%s: received: %s\n", __func__, buf);
+        cb_result = IOTHUB_CLIENT_IOTHUB_METHOD_STATUS_SUCCESS;
+    }
+
+    return cb_result;
+}
+
+static void connection_callback(IOTHUB_CLIENT_CONNECTION_STATUS result,
+    IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* user_context)
+{
+    UNUSED(user_context);
+
+    printf("%s: %s, reason: %s\n", __func__,
+        ENUM_TO_STRING(IOTHUB_CLIENT_CONNECTION_STATUS, result),
+        ENUM_TO_STRING(IOTHUB_CLIENT_CONNECTION_STATUS_REASON, reason));
+
+    if (result == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED) {
+        g_connection_complete = true;
+        g_reconnect_cnt++;
+    }
+    else {
+        /**
+         * Disconnect looks like this:
+         * IOTHUB_CLIENT_CONNECTION_UNAUTHENTICATED,
+         * reason: IOTHUB_CLIENT_CONNECTION_COMMUNICATION_ERROR
+         */
+         // Do not trigger reconnect while callback is called during normal
+         // connect
+        if (g_dps_reconnect && !g_please_reconnect) {
+            printf("\n Signaling reconnect request \n");
+            g_please_reconnect = true;
+        }
+        g_connection_complete = false;
+    }
 }
 
 static void registation_status_callback(PROV_DEVICE_REG_STATUS reg_status, void* user_context)
 {
-    (void)user_context;
-    (void)printf("Provisioning Status: %s\r\n", ENUM_TO_STRING(PROV_DEVICE_REG_STATUS, reg_status));
+    UNUSED(user_context);
+
+    printf("%s: Provisioning Status: %s\n", __func__,
+        ENUM_TO_STRING(PROV_DEVICE_REG_STATUS, reg_status));
 }
 
-static void iothub_connection_status(IOTHUB_CLIENT_CONNECTION_STATUS result, IOTHUB_CLIENT_CONNECTION_STATUS_REASON reason, void* user_context)
+static void register_device_callback(PROV_DEVICE_RESULT register_result,
+    const char* iothub_uri, const char* device_id, void* user_context)
 {
-    (void)reason;
-    if (user_context == NULL)
-    {
-        printf("iothub_connection_status user_context is NULL\r\n");
-    }
-    else
-    {
-        IOTHUB_CLIENT_SAMPLE_INFO* iothub_info = (IOTHUB_CLIENT_SAMPLE_INFO*)user_context;
-        if (result == IOTHUB_CLIENT_CONNECTION_AUTHENTICATED)
-        {
-            iothub_info->connected = 1;
-        }
-        else
-        {
-            iothub_info->connected = 0;
-            iothub_info->stop_running = 1;
-        }
-    }
-}
+    UNUSED(user_context);
 
-static void register_device_callback(PROV_DEVICE_RESULT register_result, const char* iothub_uri, const char* device_id, void* user_context)
-{
-    if (user_context == NULL)
-    {
-        printf("user_context is NULL\r\n");
+    if (register_result == PROV_DEVICE_RESULT_OK) {
+        printf("%s: Registration Information received from service: %s, deviceId: %s\n",
+            __func__, iothub_uri, device_id);
+
+        g_iothub_uri = _strdup(iothub_uri);
+        g_device_id = _strdup(device_id);
+
+        g_registration_complete = true;
+
     }
-    else
-    {
-        CLIENT_SAMPLE_INFO* user_ctx = (CLIENT_SAMPLE_INFO*)user_context;
-        if (register_result == PROV_DEVICE_RESULT_OK)
-        {
-            (void)printf("Registration Information received from service: %s!\r\n", iothub_uri);
-            (void)mallocAndStrcpy_s(&user_ctx->iothub_uri, iothub_uri);
-            (void)mallocAndStrcpy_s(&user_ctx->device_id, device_id);
-            user_ctx->registration_complete = 1;
-        }
-        else
-        {
-            (void)printf("Failure encountered on registration %s\r\n", ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result) );
-            user_ctx->registration_complete = 2;
-        }
+    else {
+        (void)printf("%s: Failure registering device: %s\n", __func__,
+            ENUM_TO_STRING(PROV_DEVICE_RESULT, register_result));
     }
 }
 
-int main()
+static void sendMessage(IOTHUB_CLIENT_HANDLE iotHubClientHandle)
 {
-    SECURE_DEVICE_TYPE hsm_type;
-    //hsm_type = SECURE_DEVICE_TYPE_TPM;
-    hsm_type = SECURE_DEVICE_TYPE_X509;
-    //hsm_type = SECURE_DEVICE_TYPE_SYMMETRIC_KEY;
+    char payload[32];
 
-    bool traceOn = false;
+    snprintf(payload, sizeof(payload), "%zd", g_messageTrackingId);
 
-    (void)IoTHub_Init();
+    IOTHUB_MESSAGE_HANDLE messageHandle = IoTHubMessage_CreateFromByteArray(
+        (unsigned char*)payload, strlen(payload));
+
+    if (messageHandle == NULL) {
+        printf("%s: unable to create a new IoTHubMessage\n", __func__);
+    }
+    else {
+        if (IoTHubClient_SendEventAsync(iotHubClientHandle, messageHandle,
+            msg_confirmation_callback, (void*)g_messageTrackingId)
+            == IOTHUB_CLIENT_OK) {
+            printf("%s: with id %zd (recconnect_cnt = %zd) \n", __func__,
+                g_messageTrackingId, g_reconnect_cnt);
+        }
+        IoTHubMessage_Destroy(messageHandle);
+    }
+    g_messageTrackingId++;
+}
+
+static void sig_handler(int signo) {
+    if (signo == SIGINT) {
+        printf("\nreceived SIGINT - terminating\n");
+        g_sending = false;
+    }
+    else if (signo == SIGTERM) {
+        printf("\nreceived SIGTERM - terminating\n");
+        g_sending = false;
+    }
+    else {
+        printf("\nreceived unknown signal - ignoring\n");
+        return;
+    }
+}
+
+static void print_help(void)
+{
+    char *txt = ""
+        "Usage: simplect[OPTIONS]\n"
+        "simple azure iot test framework\n\n"
+        "Options:\n"
+        "-d, --dps-reconnect perform full reconnect via DPS if SAS token expired \n"
+        "-P, --use-proxy    use http proxy \n"
+        "-x, --protocol     iothub protocol [AMQP_WEBSOCKETS | MQTT_WEBSOCKETS]\n"
+        "-t, --traceon      activate Azure IoT SDK traces\n"
+        "-p, --period       period in seconds (example: -p 60)\n"
+        "-s, --scope        DPS scope (example: -s 0ne0001205C)\n"
+        "-h, --help         this\n\n";
+
+    printf("%s", txt);
+}
+
+static void connect() {
+    printf(">%s\n", __func__);
+    g_connection_complete = false;
+
+    if (connect_DPS() != EXIT_SUCCESS) {
+        printf("connect_DPS() failed, aborting\n");
+        exit(-1);
+    }
+
+    if (connect_IoTHub() != EXIT_SUCCESS) {
+        printf("connect_IoTHub() failed, aborting\n");
+        exit(-1);
+    }
+    printf("<%s\n", __func__);
+}
+
+int main(int argc, char* argv[]) {
+    (void)argc;
+    (void)argv;
+    /*int c;*/
+    size_t period_sec = 2;
+
+    //while (1) {
+    //    static struct option long_options[] = {
+    //        {"dps-reconnect", no_argument, 0, 'd'},
+    //        {"help", no_argument, 0, 'h'},
+    //        {"period", required_argument, 0, 'p'},
+    //        {"protocol", required_argument, 0, 'x'},
+    //        {"scope", required_argument, 0, 's'},
+    //        {"traceon", no_argument, 0, 't'},
+    //        {"use-proxy", no_argument, 0, 'P'}, {0, 0, 0, 0}
+    //    };
+
+    //    /* getopt_long stores the option index here. */
+    //    int option_index = 0;
+
+    //    c = getopt_long(argc, argv, "x:ts:p:Ph", long_options, &option_index);
+
+    //    /* Detect the end of the options. */
+    //    if (c == -1)
+    //        break;
+
+    //    switch (c) {
+    //    case 0:
+    //        /* If this option set a flag, do nothing else now. */
+    //        if (long_options[option_index].flag != 0)
+    //            break;
+    //        printf("option %s", long_options[option_index].name);
+    //        if (optarg)
+    //            printf(" with arg %s", optarg);
+    //        printf("\n");
+    //        break;
+    //    case 'd': /* dps-reconnect */
+    //        g_dps_reconnect = true;
+    //        break;
+
+    //    case 'P': /* proxy */
+    //        g_use_proxy = true;
+    //        break;
+
+    //    case 'x': /* protocol MQTT/AMQP */
+    //        set_iothub_protocol("AMPQ_WEBSOCKETS");
+    //        break;
+
+    //    case 's':
+    //        g_id_scope = optarg;
+    //        break;
+
+    //    case 'p':
+    //        period_sec = atoi(optarg);
+    //        break;
+
+    //    case 't':
+    //        g_traceOn = true;
+    //        break;
+
+    //    case 'h':
+    //        print_help();
+    //        return EXIT_SUCCESS;
+
+    //    case '?':
+    //        /* getopt_long already printed an error message. */
+    //        break;
+
+    //    default:
+    //        abort();
+    //    }
+    //}
+    signal(SIGINT, sig_handler);
+    signal(SIGTERM, sig_handler);
+
+    set_iothub_protocol("AMQP_WEBSOCKETS");
+
+    if (platform_init() != 0) {
+        printf("Platform_init failed!\n");
+        return EXIT_FAILURE;
+    }
+    SECURE_DEVICE_TYPE hsm_type = SECURE_DEVICE_TYPE_X509;
     (void)prov_dev_security_init(hsm_type);
-    // Set the symmetric key if using they auth type
-    //prov_dev_set_symmetric_key_info("<symm_registration_id>", "<symmetric_Key>");
 
-    PROV_DEVICE_TRANSPORT_PROVIDER_FUNCTION prov_transport;
-    HTTP_PROXY_OPTIONS http_proxy;
-    CLIENT_SAMPLE_INFO user_ctx;
+    //memset(&g_http_proxy, 0, sizeof(HTTP_PROXY_OPTIONS));
 
-    memset(&http_proxy, 0, sizeof(HTTP_PROXY_OPTIONS));
-    memset(&user_ctx, 0, sizeof(CLIENT_SAMPLE_INFO));
 
-    // Protocol to USE - HTTP, AMQP, AMQP_WS, MQTT, MQTT_WS
-#ifdef SAMPLE_MQTT
-    prov_transport = Prov_Device_MQTT_Protocol;
-#endif // SAMPLE_MQTT
-#ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-    prov_transport = Prov_Device_MQTT_WS_Protocol;
-#endif // SAMPLE_MQTT_OVER_WEBSOCKETS
-#ifdef SAMPLE_AMQP
-    prov_transport = Prov_Device_AMQP_Protocol;
-#endif // SAMPLE_AMQP
-#ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-    prov_transport = Prov_Device_AMQP_WS_Protocol;
-#endif // SAMPLE_AMQP_OVER_WEBSOCKETS
-#ifdef SAMPLE_HTTP
-    prov_transport = Prov_Device_HTTP_Protocol;
-#endif // SAMPLE_HTTP
+    printf(" Provisioning API Version: %s\n", Prov_Device_GetVersionString());
+    printf("   IOT HUB Client Version: %s\n", IoTHubClient_GetVersionString());
+    printf("         Provisioning URI: %s\n", g_prov_uri);
+    printf("       Provisioning Scope: %s\n", g_id_scope);
+    printf("Message interval (period): %zd\n", period_sec);
 
-    // Set ini
-    user_ctx.registration_complete = 0;
-    user_ctx.sleep_time = 10;
-
-    printf("Provisioning API Version: %s\r\n", Prov_Device_LL_GetVersionString());
-    printf("Iothub API Version: %s\r\n", IoTHubClient_GetVersionString());
-
-    if (g_use_proxy)
-    {
-        http_proxy.host_address = PROXY_ADDRESS;
-        http_proxy.port = PROXY_PORT;
+    /*if (g_use_proxy) {
+        g_http_proxy.host_address = PROXY_ADDRESS;
+        g_http_proxy.port = PROXY_PORT;
     }
+*/
+    connect();
+    g_sending = true;
 
-    PROV_DEVICE_LL_HANDLE handle;
-    if ((handle = Prov_Device_LL_Create(global_prov_uri, id_scope, prov_transport)) == NULL)
-    {
-        (void)printf("failed calling Prov_Device_LL_Create\r\n");
-    }
-    else
-    {
-        if (http_proxy.host_address != NULL)
-        {
-            Prov_Device_LL_SetOption(handle, OPTION_HTTP_PROXY, &http_proxy);
+    do {
+        if (g_dps_reconnect && g_please_reconnect) {
+            printf("\n Reconnect requested - destroying IotHubClient \n");
+            IoTHubClient_Destroy(iothubclient);
+            ThreadAPI_Sleep(5000);
+            printf("\n IotHubClient destroyed, trying reconnect\n");
+            connect();
+        }
+        else if (g_connection_complete) {
+            sendMessage(iothubclient);
         }
 
-        Prov_Device_LL_SetOption(handle, PROV_OPTION_LOG_TRACE, &traceOn);
-#ifdef SET_TRUSTED_CERT_IN_SAMPLES
-        // Setting the Trusted Certificate.  This is only necessary on system with without
-        // built in certificate stores.
-        Prov_Device_LL_SetOption(handle, OPTION_TRUSTED_CERT, certificates);
-#endif // SET_TRUSTED_CERT_IN_SAMPLES
+        ThreadAPI_Sleep(1000 * period_sec);
+    } while (g_sending);
 
-        // This option sets the registration ID it overrides the registration ID that is 
-        // set within the HSM so be cautious if setting this value
-        //Prov_Device_SetOption(prov_device_handle, PROV_REGISTRATION_ID, "[REGISTRATION ID]");
+    IoTHubClient_Destroy(iothubclient);
 
-        if (Prov_Device_LL_Register_Device(handle, register_device_callback, &user_ctx, registation_status_callback, &user_ctx) != PROV_DEVICE_RESULT_OK)
-        {
-            (void)printf("failed calling Prov_Device_LL_Register_Device\r\n");
-        }
-        else
-        {
-            do
-            {
-                Prov_Device_LL_DoWork(handle);
-                ThreadAPI_Sleep(user_ctx.sleep_time);
-            } while (user_ctx.registration_complete == 0);
-        }
-        Prov_Device_LL_Destroy(handle);
-    }
+    free(g_iothub_uri);
+    free(g_device_id);
 
-    if (user_ctx.registration_complete != 1)
-    {
-        (void)printf("registration failed!\r\n");
-    }
-    else
-    {
-        IOTHUB_CLIENT_TRANSPORT_PROVIDER iothub_transport;
-
-        // Protocol to USE - HTTP, AMQP, AMQP_WS, MQTT, MQTT_WS
-#if defined(SAMPLE_MQTT) || defined(SAMPLE_HTTP) // HTTP sample will use mqtt protocol
-        iothub_transport = MQTT_Protocol;
-#endif // SAMPLE_MQTT
-#ifdef SAMPLE_MQTT_OVER_WEBSOCKETS
-        iothub_transport = MQTT_WebSocket_Protocol;
-#endif // SAMPLE_MQTT_OVER_WEBSOCKETS
-#ifdef SAMPLE_AMQP
-        iothub_transport = AMQP_Protocol;
-#endif // SAMPLE_AMQP
-#ifdef SAMPLE_AMQP_OVER_WEBSOCKETS
-        iothub_transport = AMQP_Protocol_over_WebSocketsTls;
-#endif // SAMPLE_AMQP_OVER_WEBSOCKETS
-
-        IOTHUB_DEVICE_CLIENT_LL_HANDLE device_ll_handle;
-
-        (void)printf("Creating IoTHub Device handle\r\n");
-        if ((device_ll_handle = IoTHubDeviceClient_LL_CreateFromDeviceAuth(user_ctx.iothub_uri, user_ctx.device_id, iothub_transport) ) == NULL)
-        {
-            (void)printf("failed create IoTHub client from connection string %s!\r\n", user_ctx.iothub_uri);
-        }
-        else
-        {
-            IOTHUB_CLIENT_SAMPLE_INFO iothub_info;
-            TICK_COUNTER_HANDLE tick_counter_handle = tickcounter_create();
-            tickcounter_ms_t current_tick;
-            tickcounter_ms_t last_send_time = 0;
-            size_t msg_count = 0;
-            iothub_info.stop_running = 0;
-            iothub_info.connected = 0;
-
-            (void)IoTHubDeviceClient_LL_SetConnectionStatusCallback(device_ll_handle, iothub_connection_status, &iothub_info);
-
-            // Set any option that are neccessary.
-            // For available options please see the iothub_sdk_options.md documentation
-
-            IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_LOG_TRACE, &traceOn);
-
-#ifdef SET_TRUSTED_CERT_IN_SAMPLES
-            // Setting the Trusted Certificate.  This is only necessary on system with without
-            // built in certificate stores.
-            IoTHubDeviceClient_LL_SetOption(device_ll_handle, OPTION_TRUSTED_CERT, certificates);
-#endif // SET_TRUSTED_CERT_IN_SAMPLES
-
-            (void)IoTHubDeviceClient_LL_SetMessageCallback(device_ll_handle, receive_msg_callback, &iothub_info);
-
-            (void)printf("Sending 1 messages to IoTHub every %d seconds for %d messages (Send any message to stop)\r\n", TIME_BETWEEN_MESSAGES, MESSAGES_TO_SEND);
-            do
-            {
-                if (iothub_info.connected != 0)
-                {
-                    // Send a message every TIME_BETWEEN_MESSAGES seconds
-                    (void)tickcounter_get_current_ms(tick_counter_handle, &current_tick);
-                    if ((current_tick - last_send_time) / 1000 > TIME_BETWEEN_MESSAGES)
-                    {
-                        static char msgText[1024];
-                        sprintf_s(msgText, sizeof(msgText), "{ \"message_index\" : \"%zu\" }", msg_count++);
-
-                        IOTHUB_MESSAGE_HANDLE msg_handle = IoTHubMessage_CreateFromByteArray((const unsigned char*)msgText, strlen(msgText));
-                        if (msg_handle == NULL)
-                        {
-                            (void)printf("ERROR: iotHubMessageHandle is NULL!\r\n");
-                        }
-                        else
-                        {
-                            if (IoTHubDeviceClient_LL_SendEventAsync(device_ll_handle, msg_handle, NULL, NULL) != IOTHUB_CLIENT_OK)
-                            {
-                                (void)printf("ERROR: IoTHubClient_LL_SendEventAsync..........FAILED!\r\n");
-                            }
-                            else
-                            {
-                                (void)tickcounter_get_current_ms(tick_counter_handle, &last_send_time);
-                                (void)printf("IoTHubClient_LL_SendEventAsync accepted message [%zu] for transmission to IoT Hub.\r\n", msg_count);
-
-                            }
-                            IoTHubMessage_Destroy(msg_handle);
-                        }
-                    }
-                }
-                IoTHubDeviceClient_LL_DoWork(device_ll_handle);
-                ThreadAPI_Sleep(1);
-            } while (iothub_info.stop_running == 0 && msg_count < MESSAGES_TO_SEND);
-
-            size_t index = 0;
-            for (index = 0; index < 10; index++)
-            {
-                IoTHubDeviceClient_LL_DoWork(device_ll_handle);
-                ThreadAPI_Sleep(1);
-            }
-            tickcounter_destroy(tick_counter_handle);
-            // Clean up the iothub sdk handle
-            IoTHubDeviceClient_LL_Destroy(device_ll_handle);
-        }
-    }
-    free(user_ctx.iothub_uri);
-    free(user_ctx.device_id);
     prov_dev_security_deinit();
 
     // Free all the sdk subsystem
-    IoTHub_Deinit();
+    platform_deinit();
+    return EXIT_SUCCESS;
+}
 
-    (void)printf("Press any enter to continue:\r\n");
-    (void)getchar();
+/******************************************************************************/
 
-    return 0;
+static void set_iothub_protocol(const char* protoname) {
+    if (strcmp(protoname, "AMPQ_WEBSOCKETS") == 0) {
+        g_iothub_protocol = AMQP_Protocol_over_WebSocketsTls;
+        return;
+    }
+    if (strcmp(protoname, "MQTT_WEBSOCKETS") == 0) {
+        g_iothub_protocol = MQTT_WebSocket_Protocol;
+        return;
+    }
+}
+
+/******************************************************************************/
+
+static int connect_DPS() {
+    PROV_DEVICE_TRANSPORT_PROVIDER_FUNCTION prov_transport;
+    prov_transport = Prov_Device_HTTP_Protocol;
+    PROV_DEVICE_RESULT prov_device_result;
+    PROV_DEVICE_HANDLE prov_device_handle;
+    g_please_reconnect = false;
+    g_registration_complete = false;
+    printf(">%s\n", __func__);
+
+
+    if ((prov_device_handle = Prov_Device_Create(
+        g_prov_uri, g_id_scope, prov_transport)) == NULL) {
+        printf("failed calling Prov_Device_Create\n");
+        return EXIT_FAILURE;
+    }
+    if (g_http_proxy.host_address != NULL) {
+        Prov_Device_SetOption(
+            prov_device_handle, OPTION_HTTP_PROXY, &g_http_proxy);
+    }
+
+    Prov_Device_SetOption(
+        prov_device_handle, PROV_OPTION_LOG_TRACE, &g_traceOn);
+
+    prov_device_result = Prov_Device_Register_Device(prov_device_handle,
+        register_device_callback, NULL, registation_status_callback, NULL);
+
+    if (prov_device_result != PROV_DEVICE_RESULT_OK) {
+        printf("FATAL: Prov_Device_Register_Device failed\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("Registering Device ...\n");
+
+    do {
+        ThreadAPI_Sleep(1000);
+    } while (!g_registration_complete);
+    printf(" DPS registration complete\n");
+
+    Prov_Device_Destroy(prov_device_handle);
+    printf("<%s\n", __func__);
+
+    return EXIT_SUCCESS;
+}
+
+/******************************************************************************/
+
+static int connect_IoTHub() {
+    printf(">%s\n", __func__);
+    g_connection_complete = false;
+    iothubclient = IoTHubClient_CreateFromDeviceAuth(
+        g_iothub_uri, g_device_id, g_iothub_protocol);
+
+    if (iothubclient == NULL) {
+        printf("FATAL: can't IoTHubClient_CreateFromDeviceAuth.\n");
+        return EXIT_FAILURE;
+    }
+
+    if (IoTHubClient_SetOption(iothubclient, OPTION_LOG_TRACE, &g_traceOn) !=
+        IOTHUB_CLIENT_OK) {
+        printf("IoTHubClient_SetOption OPTION_LOG_TRACE failed.\n");
+    }
+
+    if (IoTHubClient_SetRetryPolicy(iothubclient, IOTHUB_CLIENT_RETRY_INTERVAL,
+        120) != IOTHUB_CLIENT_OK) {
+        printf("IoTHubClient_SetRetryPolicy failed.\n");
+    }
+
+    if (IoTHubClient_SetConnectionStatusCallback(
+        iothubclient, connection_callback, 0) != IOTHUB_CLIENT_OK) {
+        printf("IoTHubClient_SetConnectionStatusCallback failed.\n");
+    }
+
+    if (IoTHubClient_SetMessageCallback(
+        iothubclient, msg_receive_callback, 0) != IOTHUB_CLIENT_OK) {
+        printf("IoTHubClient_SetMessageCallback failed.\n");
+    }
+
+    if (IoTHubClient_SetDeviceMethodCallback(
+        iothubclient, method_invocation_callback, 0) != IOTHUB_CLIENT_OK) {
+        printf("IoTHubClient_SetDeviceMethodCallback failed.\n");
+    }
+
+    printf("Waiting for Authentication ... \n");
+
+    do {
+        ThreadAPI_Sleep(1000);
+    } while (!g_connection_complete);
+
+    printf(" IoT Hub connection complete\n");
+    return EXIT_SUCCESS;
 }
