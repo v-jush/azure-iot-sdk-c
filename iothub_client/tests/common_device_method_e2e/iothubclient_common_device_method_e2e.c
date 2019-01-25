@@ -280,11 +280,6 @@ void test_device_method_with_string_ex(IOTHUB_PROVISIONED_DEVICE** devicesToUse,
         result = IoTHubDeviceClient_SetConnectionStatusCallback(registered_devices[iterator], connection_status_callback, connection_infos[iterator]);
         ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set connection Status Callback");
 
-        size_t refresh_time = 10;
-        result = IoTHubDeviceClient_SetOption(iothub_deviceclient_handle, OPTION_SAS_TOKEN_REFRESH_TIME, (const void*)&refresh_time);
-
-        ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set SAS TOKEN REFRESH TIME");
-
         result = IoTHubDeviceClient_SetOption(registered_devices[iterator], OPTION_LOG_TRACE, &trace);
         ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set tracing option");
 
@@ -295,6 +290,13 @@ void test_device_method_with_string_ex(IOTHUB_PROVISIONED_DEVICE** devicesToUse,
 
         result = IoTHubDeviceClient_SetDeviceMethodCallback(registered_devices[iterator], MethodCallback, (void*)payload);
         ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set the device method callback");
+
+        ThreadAPI_Sleep(5000);
+
+        size_t refresh_time = 10;
+        result = IoTHubDeviceClient_SetOption(iothub_deviceclient_handle, OPTION_SAS_TOKEN_REFRESH_TIME, (const void*)&refresh_time);
+
+        ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set SAS TOKEN REFRESH TIME");
     }
 
     beginOperation = time(NULL);
@@ -345,7 +347,7 @@ void test_device_method_with_string_ex(IOTHUB_PROVISIONED_DEVICE** devicesToUse,
     }
 
     // Wait for the method to subscribe
-    ThreadAPI_Sleep(DEVICE_METHOD_SUB_WAIT_TIME_MS);
+    ThreadAPI_Sleep(11000);
 
     iotHubServiceClientHandle = IoTHubServiceClientAuth_CreateFromConnectionString(IoTHubAccount_GetIoTHubConnString(g_iothubAcctInfo));
     ASSERT_IS_NOT_NULL(iotHubServiceClientHandle, "Could not create service client handle");
@@ -353,7 +355,6 @@ void test_device_method_with_string_ex(IOTHUB_PROVISIONED_DEVICE** devicesToUse,
     serviceClientDeviceMethodHandle = IoTHubDeviceMethod_Create(iotHubServiceClientHandle);
     ASSERT_IS_NOT_NULL(serviceClientDeviceMethodHandle, "Could not create device method handle");
 
-    ThreadAPI_Sleep(11000);
     for (iterator = 0; iterator < number_of_multiplexed_devices; iterator++)
     {
         test_invoke_device_method(devicesToUse[iterator]->deviceId, devicesToUse[iterator]->moduleId, payload);
@@ -475,12 +476,6 @@ static void create_hub_client_from_provisioned_device(IOTHUB_PROVISIONED_DEVICE*
 
     bool trace = true;
     setoption_on_device_or_module(OPTION_LOG_TRACE, &trace, "Cannot enable tracing");
-
-    size_t refresh_time = 10;
-    IOTHUB_CLIENT_RESULT result = IoTHubDeviceClient_SetOption(iothub_deviceclient_handle, OPTION_SAS_TOKEN_REFRESH_TIME, (const void*)&refresh_time);
-
-    ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set SAS TOKEN REFRESH TIME");
-
 }
 
 void test_device_method_with_string(IOTHUB_PROVISIONED_DEVICE* deviceToUse, IOTHUB_CLIENT_TRANSPORT_PROVIDER protocol, const char *payload)
@@ -520,11 +515,18 @@ void test_device_method_with_string(IOTHUB_PROVISIONED_DEVICE* deviceToUse, IOTH
     // Wait for the method to subscribe
     ThreadAPI_Sleep(DEVICE_METHOD_SUB_WAIT_TIME_MS);
 
+    size_t refresh_time = 10;
+    IOTHUB_CLIENT_RESULT result = IoTHubDeviceClient_SetOption(iothub_deviceclient_handle, OPTION_SAS_TOKEN_REFRESH_TIME, (const void*)&refresh_time);
+
+    ASSERT_ARE_EQUAL(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK, result, "Could not set SAS TOKEN REFRESH TIME");
+
     iotHubServiceClientHandle = IoTHubServiceClientAuth_CreateFromConnectionString(IoTHubAccount_GetIoTHubConnString(g_iothubAcctInfo));
     ASSERT_IS_NOT_NULL(iotHubServiceClientHandle, "Could not create service client handle");
 
     serviceClientDeviceMethodHandle = IoTHubDeviceMethod_Create(iotHubServiceClientHandle);
     ASSERT_IS_NOT_NULL(serviceClientDeviceMethodHandle, "Could not create device method handle");
+
+    ThreadAPI_Sleep(11000);
 
     test_invoke_device_method(deviceToUse->deviceId, deviceToUse->moduleId, payload);
 }
