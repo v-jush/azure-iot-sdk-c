@@ -19,3 +19,6 @@
 [submodule "provisioning_client/deps/utpm"]
 	path = provisioning_client/deps/utpm
 	url = https://github.com/Azure/azure-utpm-c.git
+[submodule "deps/umock-c"]
+	path = deps/umock-c
+	url = https://github.com/Azure/umock-c.git
