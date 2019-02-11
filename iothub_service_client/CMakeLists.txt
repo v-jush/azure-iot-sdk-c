@@ -53,7 +53,6 @@ add_library(iothub_service_client ${iothub_service_client_c_files} ${iothub_serv
 
 set(install_libs iothub_service_client)
 
-
 if (${build_as_dynamic})
     add_library(iothub_service_client_dll SHARED ${iothub_service_client_c_files} ${iothub_service_client_h_files} ./src/iothub_service_client.def)
     linkSharedUtil(iothub_service_client_dll)
