@@ -10,6 +10,8 @@ cat /etc/*release | grep VERSION*
 gcc --version
 openssl version
 
+git submodule update --init
+
 script_dir=$(cd "$(dirname "$0")" && pwd)
 build_root=$(cd "${script_dir}/.." && pwd)
 build_folder=$build_root"/cmake/iot_option"
@@ -19,7 +21,7 @@ MAKE_CORES=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 
 echo "Initial MAKE_CORES=$MAKE_CORES"
 
-# Make sure there is enough virtual memory on the device to handle more than one job  
+# Make sure there is enough virtual memory on the device to handle more than one job
 MINVSPACE="1500000"
 
 # Acquire total memory and total swap space setting them to zero in the event the command fails

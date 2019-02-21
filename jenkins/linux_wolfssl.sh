@@ -7,6 +7,8 @@ cat /etc/*release | grep VERSION*
 gcc --version
 curl --version
 
+git submodule update --init
+
 build_root=$(cd "$(dirname "$0")/.." && pwd)
 cd $build_root
 

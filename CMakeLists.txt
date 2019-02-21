@@ -216,12 +216,14 @@ include_directories(${UMOCK_C_INC_FOLDER})
 if (${original_run_e2e_tests} OR ${original_run_unittests} OR ${run_sfc_tests})
     set(SHARED_UTIL_REAL_TEST_FOLDER ${CMAKE_CURRENT_LIST_DIR}/c-utility/tests/real_test_files CACHE INTERNAL "this is what needs to be included when doing test sources" FORCE)
 
+    set(CLONE_OPTIONS "-q")
+
     #Clone the test submodules if needed
     if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/deps/testrunnerswitcher/CMakeLists.txt")
-        execute_process(COMMAND git clone https://github.com/Azure/azure-c-testrunnerswitcher.git -q --no-tags ${CMAKE_CURRENT_SOURCE_DIR}/deps/testrunnerswitcher)
+        execute_process(COMMAND git clone https://github.com/Azure/azure-c-testrunnerswitcher.git ${CLONE_OPTIONS} ${CMAKE_CURRENT_SOURCE_DIR}/deps/testrunnerswitcher)
     endif()
     if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/deps/ctest/CMakeLists.txt")
-        execute_process(COMMAND git clone https://github.com/Azure/azure-ctest.git -q --no-tags ${CMAKE_CURRENT_SOURCE_DIR}/deps/ctest)
+        execute_process(COMMAND git clone https://github.com/Azure/azure-ctest.git ${CLONE_OPTIONS} ${CMAKE_CURRENT_SOURCE_DIR}/deps/ctest)
     endif()
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/testrunnerswitcher)
