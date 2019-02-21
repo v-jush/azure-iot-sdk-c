@@ -337,6 +337,7 @@ endif()
 
 if (${build_service_client})
     if (${run_unittests})
+        add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/sal)
         add_subdirectory(${SHARED_UTIL_FOLDER}/testtools/micromock)
     endif()
 

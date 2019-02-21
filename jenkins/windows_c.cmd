@@ -10,6 +10,8 @@ set build-root=%~dp0..
 rem // resolve to fully qualified path
 for %%i in ("%build-root%") do set build-root=%%~fi
 
+git submodule update --init
+
 REM -- C --
 cd %build-root%\build_all\windows
 call build.cmd --run-unittests --run-e2e-tests --run-sfc-tests --build-traceabilitytool --provisioning --use-edge-modules %*

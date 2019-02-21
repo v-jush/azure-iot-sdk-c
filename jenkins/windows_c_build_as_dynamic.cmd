@@ -20,6 +20,8 @@ set cmake-root=%build-root%
 
 set CMAKE_DIR=dyn
 
+git submodule update --init
+
 @REM :args-loop
 REM if "%1" equ "--platform" goto arg-build-platform
 REM call :usage && exit /b 1

@@ -5,7 +5,9 @@
 build_root=$(cd "$(dirname "$0")/.." && pwd)
 cd $build_root
 
+git submodule update --init
+
 # -- C --
-./build_all/linux/build.sh --run-longhaul-tests "$@" #-x 
+./build_all/linux/build.sh --run-longhaul-tests "$@" #-x
 [ $? -eq 0 ] || exit $?
 

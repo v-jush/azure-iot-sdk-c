@@ -10,6 +10,8 @@ gcc --version
 openssl version
 curl --version
 
+git submodule update --init
+
 build_root=$(cd "$(dirname "$0")/.." && pwd)
 cd $build_root
 

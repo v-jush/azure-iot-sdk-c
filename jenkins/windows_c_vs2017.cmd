@@ -43,6 +43,8 @@ goto args-loop
 
 :args-done
 
+git submodule update --init
+
 REM -- Remove the cmake directory --
 if EXIST %build-root%\cmake\%CMAKE_DIR% (
     rmdir /s/q %build-root%\cmake\%CMAKE_DIR%
@@ -65,4 +67,3 @@ if %build-platform% neq arm (
 
 popd
 goto :eof
- 
