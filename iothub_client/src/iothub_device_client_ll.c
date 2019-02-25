@@ -46,6 +46,11 @@ IOTHUB_DEVICE_CLIENT_LL_HANDLE IoTHubDeviceClient_LL_CreateFromDeviceAuth(const 
     return (IOTHUB_DEVICE_CLIENT_LL_HANDLE)IoTHubClientCore_LL_CreateFromDeviceAuth(iothub_uri, device_id, protocol);
 }
 
+/*IOTHUB_DEVICE_CLIENT_LL_HANDLE IoTHubDeviceClient_CreateFromProvisioning(const char* provisioning_url, const char* id_scope, const PROVISIONING_INFO* prov_info, PROV_REGISTRATION_CB prov_reg_cb, void* user_ctx)
+{
+    return NULL;// (IOTHUB_DEVICE_CLIENT_LL_HANDLE)IoTHubClientCore_LL_CreateFromDeviceAuth(iothub_uri, device_id, protocol);
+}*/
+
 void IoTHubDeviceClient_LL_Destroy(IOTHUB_DEVICE_CLIENT_LL_HANDLE iotHubClientHandle)
 {
     IoTHubClientCore_LL_Destroy((IOTHUB_CLIENT_CORE_LL_HANDLE)iotHubClientHandle);

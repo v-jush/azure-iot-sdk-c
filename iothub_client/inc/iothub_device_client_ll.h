@@ -32,6 +32,8 @@
 #include "iothub_transport_ll.h"
 #include "iothub_client_core_ll.h"
 
+#include "iothub_prov_transport.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -98,6 +100,8 @@ typedef struct IOTHUB_CLIENT_CORE_LL_HANDLE_DATA_TAG* IOTHUB_DEVICE_CLIENT_LL_HA
      *           invoking other functions for IoT Hub client and @c NULL on failure.
      */
      MOCKABLE_FUNCTION(, IOTHUB_DEVICE_CLIENT_LL_HANDLE, IoTHubDeviceClient_LL_CreateFromDeviceAuth, const char*, iothub_uri, const char*, device_id, IOTHUB_CLIENT_TRANSPORT_PROVIDER, protocol);
+
+     //MOCKABLE_FUNCTION(, IOTHUB_DEVICE_CLIENT_LL_HANDLE, IoTHubDeviceClient_CreateFromProvisioning, const char*, provisioning_url, const char*, id_scope, const PROVISIONING_INFO*, prov_info, PROV_REGISTRATION_CB, prov_reg_cb, void*, user_ctx);
 
     /**
     * @brief    Disposes of resources allocated by the IoT Hub client. This is a

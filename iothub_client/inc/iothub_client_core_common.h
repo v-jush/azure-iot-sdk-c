@@ -11,6 +11,7 @@
 
 #include "iothub_transport_ll.h"
 #include "iothub_message.h"
+#include "iothub_prov_transport.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -232,6 +233,16 @@ extern "C"
         x509 authentication is is not supported for multiplexed connections.*/
         const char* deviceSasToken;
     } IOTHUB_CLIENT_DEVICE_CONFIG;
+
+    typedef struct PROVISIONING_INFO_TAG
+    {
+        const char* version;
+        //IOTHUB_PROV_TRANSPORT_PROVIDER iothub_protocol;
+        PROV_SECURITY_TYPE attestation_type;
+        const char* symmetricKey;
+        const char* registrationId;
+        const char* custom_hub_data;
+    } PROVISIONING_INFO;
 
 #ifdef __cplusplus
 }
