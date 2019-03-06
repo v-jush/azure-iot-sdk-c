@@ -270,7 +270,7 @@ phases:
 - phase: wolfssl
   variables:
     _PREVIEW_VSTS_DOCKER_IMAGE: "aziotbld/c-linux-wolfssl"
-  queue: Hosted Ubuntu 1804
+  queue: Hosted Ubuntu 1604
   displayName: 'wolfssl'
   steps:
   - script: |
