@@ -33,6 +33,10 @@
 #include "prov_service_client/provisioning_service_client.h"
 #include "prov_service_client/provisioning_sc_enrollment.h"
 
+#ifdef SET_TRUSTED_CERT_IN_SAMPLES
+#include "../../../certs/certs.h"
+#endif // SET_TRUSTED_CERT_IN_SAMPLES
+
 typedef enum REGISTRATION_RESULT_TAG
 {
     REG_RESULT_BEGIN,
@@ -95,6 +99,11 @@ static PROV_DEVICE_LL_HANDLE create_dps_handle(PROV_DEVICE_TRANSPORT_PROVIDER_FU
 {
     PROV_DEVICE_LL_HANDLE result;
     result = Prov_Device_LL_Create(g_dps_uri, g_dps_scope_id, dps_transport);
+
+#ifdef SET_TRUSTED_CERT_IN_SAMPLES
+    ASSERT_ARE_EQUAL(PROV_DEVICE_RESULT, PROV_DEVICE_RESULT_OK, Prov_Device_LL_SetOption(result, OPTION_TRUSTED_CERT, certificates), "Failure setting Trusted Cert option");
+#endif // SET_TRUSTED_CERT_IN_SAMPLES
+
     ASSERT_IS_NOT_NULL(result, "Failure create a DPS HANDLE");
     return result;
 }
@@ -282,6 +291,7 @@ BEGIN_TEST_SUITE(dps_client_e2e)
     {
     }
 
+#if USE_HTTP
     TEST_FUNCTION(dps_register_device_http_success)
     {
         PROV_CLIENT_E2E_INFO prov_info;
@@ -305,6 +315,7 @@ BEGIN_TEST_SUITE(dps_client_e2e)
 
         Prov_Device_LL_Destroy(handle);
     }
+#endif
 
 #if USE_AMQP
     TEST_FUNCTION(dps_register_device_amqp_success)
