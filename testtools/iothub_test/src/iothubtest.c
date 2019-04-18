@@ -888,7 +888,9 @@ static AMQP_CONN_INFO* createAmqpConnection(IOTHUB_VALIDATION_INFO* devhubValInf
                         destroyAmqpConnection(devhubValInfo->amqp_connection);
                         result = NULL;
                     }
-                    else if ((result->session = session_create(result->connection, NULL, NULL)) == NULL)
+                    else {
+                        connection_set_trace(connection, true);
+                        if ((result->session = session_create(result->connection, NULL, NULL)) == NULL)
                     {
                         LogError("Failed creating the session.");
                         destroyAmqpConnection(devhubValInfo->amqp_connection);
@@ -968,6 +970,7 @@ static AMQP_CONN_INFO* createAmqpConnection(IOTHUB_VALIDATION_INFO* devhubValInf
                                 amqpvalue_destroy(filter_set);
                             }
                         }
+                    }
                     }
                 }
 
@@ -1145,7 +1148,9 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForEvent(IOTHUB_TEST_HANDLE devhubHan
                         LogError("Failed creating the connection.");
                         result = IOTHUB_TEST_CLIENT_ERROR;
                     }
-                    else if ((session = session_create(connection, NULL, NULL)) == NULL)
+                    else {
+                        connection_set_trace(connection, true);
+                        if ((session = session_create(connection, NULL, NULL)) == NULL)
                     {
                         LogError("Failed creating the session.");
                         result = IOTHUB_TEST_CLIENT_ERROR;
@@ -1285,7 +1290,7 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_ListenForEvent(IOTHUB_TEST_HANDLE devhubHan
                     xio_destroy(tls_io);
                     saslmechanism_destroy(sasl_mechanism_handle);
                 }
-
+                }
                 free(receive_address);
             }
 
@@ -1429,7 +1434,9 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SendMessage(IOTHUB_TEST_HANDLE devhubHandle
                                 LogError("Could not create connection.");
                                 result = IOTHUB_TEST_CLIENT_ERROR;
                             }
-                            else if ((session = session_create(connection, NULL, NULL)) == NULL)
+                            else {
+                                connection_set_trace(connection, true);
+                                if ((session = session_create(connection, NULL, NULL)) == NULL)
                             {
                                 LogError("Could not create session.");
                                 result = IOTHUB_TEST_CLIENT_ERROR;
@@ -1566,6 +1573,7 @@ IOTHUB_TEST_CLIENT_RESULT IoTHubTest_SendMessage(IOTHUB_TEST_HANDLE devhubHandle
                                 amqpvalue_destroy(source);
                                 amqpvalue_destroy(target);
                             }
+                        }
                         }
                     }
 
