@@ -889,7 +889,7 @@ static AMQP_CONN_INFO* createAmqpConnection(IOTHUB_VALIDATION_INFO* devhubValInf
                         result = NULL;
                     }
                     else {
-                        connection_set_trace(connection, true);
+                        connection_set_trace(result->connection, true);
                         if ((result->session = session_create(result->connection, NULL, NULL)) == NULL)
                     {
                         LogError("Failed creating the session.");
