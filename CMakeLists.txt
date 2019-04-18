@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 2.8.11)
 project(azure_iot_sdks)
 
 include("${CMAKE_CURRENT_LIST_DIR}/configs/azure_iot_sdksFunctions.cmake")
+find_package(PkgConfig) 
 
 getIoTSDKVersion()
 message(STATUS "IoT Client SDK Version = ${IOT_SDK_VERSION}")
