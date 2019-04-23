@@ -1,0 +1,65 @@
+variables:
+  Horton.Repo: $(Build.Repository.Uri)
+  Horton.Commit: $(Build.SourceBranch)
+
+name: $(BuildID)_$(Horton.Commit)_$(BuildDefinitionName)
+variables:
+  Horton.FrameworkRoot: $(Build.SourcesDirectory)
+jobs:
+- template: templates/jobs-gate-c.yaml
+
+parameters:
+  repo: ''
+  commit: ''
+  job_tag: 'linux'
+
+jobs:
+- job: 'build_${{ parameters.job_tag }}_container'
+  steps:
+  
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      architecture: 'x64'
+  
+  - powershell: |
+
+      $NormalizedRepo=$env:Repo
+      if ($NormalizedRepo -like 'https://github.com/*') {
+        $NormalizedRepo=$NormalizedRepo.Substring('https://github.com/'.length)
+      }
+      Write-Host "##vso[task.setvariable variable=normalizedRepo]${NormalizedRepo}"
+      Write-Host "normalizedRepo=${NormalizedRepo}"
+    displayName: Removing github.com from repo name if necessary
+    env:
+      Repo: ${{ parameters.repo }}
+    ignoreLASTEXITCODE: false
+    errorActionPreference: Stop
+    failOnStderr: true
+  
+  - script: |
+      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit ${{ parameters.commit }} 
+    displayName: "build docker image ${{ parameters.language }}"
+    condition: and(succeeded())
+    env: 
+      IOTHUB_E2E_REPO_ADDRESS: $(IOTHUB-E2E-REPO-ADDRESS)
+      IOTHUB_E2E_REPO_USER: $(IOTHUB-E2E-REPO-USER)
+      IOTHUB_E2E_REPO_PASSWORD: $(IOTHUB-E2E-REPO-PASSWORD)
+      NormalizedRepo: $(NormalizedRepo)
+  - task: CopyFiles@2
+    displayName: 'Copy source tar to artifact staging'
+    inputs:
+      SourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    condition: and(
+        always(), 
+        eq('yes')
+        )
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts: drop'
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'drop'
+      publishLocation: 'Container'
+    condition: always()

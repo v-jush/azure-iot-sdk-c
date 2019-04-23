@@ -1,217 +1,134 @@
 # Start with the latest version of the Debian Docker container
-
 FROM debian:stretch
 
-
-
-RUN ls -la
-
-
-
 # Fetch and install all outstanding updates
-
 RUN apt-get update && apt-get -y upgrade
 
-
-
 # Install wget git cmake xz-utils
+RUN sudo apt-get install -y git build-essential pkg-config cmake libssl-dev uuid-dev xz-utils
 
-RUN apt-get install -y wget git cmake xz-utils sshfs sudo pkg-config uuid-dev openssh-client libssl-dev
+# SSH Tools
 
+RUN apt install -y \
+    gdbserver \
+    openssh-server
 
+EXPOSE 8082
+EXPOSE 22
 
-# Add a non-root user
+# get ready for ssh keys
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh && touch /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
 
-#RUN useradd  -d /home/builder -ms /bin/bash -G sudo -p builder builder
-RUN useradd  -d /home/aziotcl-user -ms /bin/bash -G sudo -p aziotcl-user aziotcl-user
+# make a key that we can use to connect to SSH and authorize it.  
+# people who want to use SSH can use docker cp to get the key out of the container
+RUN ssh-keygen -b 2048 -t rsa -f /root/.ssh/remote-debug -q -N ""
+RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 
-
-# Switch to new user
-
-#USER builder
-USER aziotcl-user
-
-#WORKDIR /home/builder
-WORKDIR /home/aziotcl-user
-
-
-# Don't use RPiTools because gcc is old, use linaro's toolchain
+# Get sdk
+WORKDIR /sdk
+git clone https://github.com/Azure/azure-iot-sdk-c
 
 #RUN mkdir RPiTools
 
 #WORKDIR RPiTools
 
-#RUN git clone https://github.com/raspberrypi/tools.git
-
-
-
-#RUN mkdir RPiBuild
-
-#ENV WORK_ROOT=/home/builder/RPiBuild
-#ENV WORK_ROOT=/home/aziotcl-user/RPiBuild
-ENV WORK_ROOT=/home/aziotcl-user
-
+ENV WORK_ROOT=/work
 WORKDIR ${WORK_ROOT}
 
-
-
 RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz
-
 RUN tar -xvf gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz
-
-
 
 # Set up environment variables for builds
 
 ENV TOOLCHAIN_ROOT=${WORK_ROOT}/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
-
 ENV TOOLCHAIN_SYSROOT=${TOOLCHAIN_ROOT}
-
 ENV TOOLCHAIN_EXES=${TOOLCHAIN_SYSROOT}/bin
-
 ENV TOOLCHAIN_NAME=arm-linux-gnueabihf
-
 ENV TOOLCHAIN_PREFIX=${TOOLCHAIN_SYSROOT}/usr
-
-
 
 ENV AR=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-ar
-
 ENV AS=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-as
-
 ENV CC=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-gcc
-
 ENV LD=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-ld
-
 ENV NM=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-nm
 
-
-
 ENV LDFLAGS="-L${TOOLCHAIN_SYSROOT}/usr/lib"
-
 ENV LIBS="-lssl -lcrypto -ldl -lpthread"
-
 ENV TOOLCHAIN_PREFIX=${TOOLCHAIN_SYSROOT}/usr
-
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
-
-
 
 # Download OpenSSL source and expand it
 
-RUN wget https://www.openssl.org/source/openssl-1.1.0f.tar.gz
-
-RUN tar -xvf openssl-1.1.0f.tar.gz
-
-
+RUN wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
+RUN tar -xvf openssl-1.1.1b.tar.gz openssl_source
 
 # Build OpenSSL
 
-WORKDIR openssl-1.1.0f
-
+WORKDIR openssl_source
 RUN ./Configure linux-generic32 shared --prefix=${TOOLCHAIN_PREFIX} --openssldir=${TOOLCHAIN_PREFIX}
-
 RUN make
-
 RUN make install
-
 WORKDIR ..
-
-
 
 # Download cURL source and expand it
-
 RUN wget http://curl.haxx.se/download/curl-7.64.0.tar.gz
-
-RUN tar -xvf curl-7.64.0.tar.gz
-
-
+RUN tar -xvf curl-7.64.0.tar.gz curl_source
 
 # Build cURL
-
 # we need to set the path for openssl with --with-ssl=...
-
-WORKDIR curl-7.64.0
-
+WORKDIR curl-7.64.0 curl_source
 RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu
-
 RUN make
-
 RUN make install
-
 WORKDIR ..
 
-
-
 # Download the Linux utilities for libuuid and expand it
-
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/util-linux-2.32-rc2.tar.gz
-
 RUN tar -xvf util-linux-2.32-rc2.tar.gz
 
-
-
 # Build uuid
-
 WORKDIR util-linux-2.32-rc2
-
 RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
-
 RUN make
-
 RUN make install
-
 WORKDIR ..
 
 #RUN ls -al ../RPiBuild
 
-# clone azure 
-
-RUN git clone --recursive -b raspi-pipeline https://github.com/Azure/azure-iot-sdk-c.git 
-
-#WORKDIR /home/builder/RPiBuild/azure-iot-sdk-c
-WORKDIR /home/aziotcl-user/azure-iot-sdk-c
-
-RUN ls -al
-RUN ls -al ..
-# Create a working directory for the cmake operations
-
-RUN mkdir cmake
-#RUN cd cmake
-WORKDIR cmake
+# clone azure  
+ARG SDK_REPO
+WORKDIR /sdk
+RUN git clone https://github.com/$SDK_REPO .
+RUN git submodule update --init --recursive
 
 RUN ls -al
 
 # Create a cmake toolchain file on the fly
-
 RUN echo "SET(CMAKE_SYSTEM_NAME Linux)     # this one is important" > toolchain.cmake
-
 RUN echo "SET(CMAKE_SYSTEM_VERSION 1)      # this one not so much" >> toolchain.cmake
 
-
-
 RUN echo "SET(CMAKE_C_COMPILER ${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-gcc)" >> toolchain.cmake
-
 RUN echo "SET(CMAKE_CXX_COMPILER ${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-g++)" >> toolchain.cmake
-
 RUN echo "SET(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_SYSROOT})" >> toolchain.cmake
-
 RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> toolchain.cmake
-
 RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> toolchain.cmake
-
 RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> toolchain.cmake
-
 RUN ls -al
 
 # Build the SDK. This will use the OpenSSL, cURL and uuid binaries that we built before
+COPY ./sdk_build.sh /
+RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
 
+# Phase 2: grab the code we want to test and rebuild
+ARG COMMIT_SHA_OR_BRANCH
+COPY ./fetch.sh /
+RUN /fetch.sh 
 
-RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON ..
+RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
 
-RUN make -j 2
-
-RUN make install
+# RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON ..
+# RUN make -j 2
+# RUN make install
 # or RUN cmake --build .
 
 # Finally a sanity check to make sure the files are there
