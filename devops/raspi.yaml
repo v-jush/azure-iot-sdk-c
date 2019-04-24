@@ -63,17 +63,16 @@ jobs:
       artifactName: drop
       itemPattern: 'drop/**/*e2e_exe'
   
-  - script: |
-    sudo -E ~/env_vars.sh
-    chmod -R 777 drop/
-    drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
-    call jenkins\collect_results.cmd raspi
-
-    workingDirectory: '$(System.ArtifactsDirectory)'
-
-    displayName: 'Command Line Script'
-
-    continueOnError: true
+  - task: Bash@3
+    inputs:
+      targetType: inline
+      script:
+        sudo -E ~/env_vars.sh
+        chmod -R 777 drop/
+        drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+        call jenkins\collect_results.cmd raspi
+      workingDirectory: '$(System.ArtifactsDirectory)'
+      displayName: 'Command Line Script'
 
   - task: PublishTestResults@2
     displayName: 'Publish Test Results "**/results-junit.xml"'
