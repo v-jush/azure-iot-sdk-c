@@ -57,7 +57,7 @@ ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 # Download OpenSSL source and expand it
 RUN mkdir openssl_source
 RUN wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
-RUN tar -xvf openssl-1.1.1b.tar.gz openssl_source
+RUN tar -xvfz openssl-1.1.1b.tar.gz -C openssl_source
 
 # Build OpenSSL
 
@@ -70,7 +70,7 @@ WORKDIR ..
 # Download cURL source and expand it
 RUN mkdir curl_source
 RUN wget http://curl.haxx.se/download/curl-7.64.0.tar.gz
-RUN tar -xvf curl-7.64.0.tar.gz curl_source
+RUN tar -xvfz curl-7.64.0.tar.gz -C curl_source
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
@@ -83,7 +83,7 @@ WORKDIR ..
 # Download the Linux utilities for libuuid and expand it
 RUN MKDIR util-linux
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/util-linux-2.32-rc2.tar.gz
-RUN tar -xvf util-linux-2.32-rc2.tar.gz util-linux
+RUN tar -xvfz util-linux-2.32-rc2.tar.gz -C util-linux
 
 # Build uuid
 WORKDIR util-linux
