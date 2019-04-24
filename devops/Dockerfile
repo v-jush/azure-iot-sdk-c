@@ -28,14 +28,11 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 
 #WORKDIR RPiTools
 
-ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
-ENV OPENSSL_SOURCE=openssl-1.0.2o
-ENV CURL_SOURCE=curl-7.64.0
-ENV UTIL_LINUX_SOURCE=util-linux-2.32-rc2
 
 ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
+ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
 RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
 RUN tar -xvf ${LINARO_SOURCE}.tar.xz 
 
@@ -58,6 +55,7 @@ ENV LIBS="-lssl -lcrypto -ldl -lpthread"
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 
 # Download OpenSSL source and expand it
+ENV OPENSSL_SOURCE=openssl-1.1.0j
 RUN wget https://www.openssl.org/source/${OPENSSL_SOURCE}.tar.gz
 RUN tar -xvzf ${OPENSSL_SOURCE}.tar.gz 
 
@@ -71,6 +69,7 @@ WORKDIR /${WORK_ROOT}
 
 
 # Download the Linux utilities for libuuid and expand it
+ENV UTIL_LINUX_SOURCE=util-linux-2.32-rc2
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
 RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
 
@@ -84,6 +83,7 @@ WORKDIR /${WORK_ROOT}
 #RUN ls -al ../RPiBuild
 
 # Download cURL source and expand it
+ENV CURL_SOURCE=curl-7.64.0
 RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
 RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
