@@ -62,6 +62,10 @@ jobs:
     displayName: "list stuff in current directory"
 
 
+  - script: |
+      cp -r $(Build.SourcesDirectory)/source_artifacts $(Build.ArtifactStagingDirectory)
+    displayName: "Copy Fiels Because The CopyFiles Task Sucks"
+
   - task: CopyFiles@2
     displayName: 'Copy source_artifacts to artifact staging'
     inputs:
