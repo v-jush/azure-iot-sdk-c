@@ -14,7 +14,6 @@ jobs:
       architecture: 'x64'
   
   - powershell: |
-
       $NormalizedRepo=$env:Repo
       if ($NormalizedRepo -like 'https://github.com/*') {
         $NormalizedRepo=$NormalizedRepo.Substring('https://github.com/'.length)
@@ -37,6 +36,7 @@ jobs:
       IOTHUB_E2E_REPO_USER: $(IOTHUB-E2E-REPO-USER)
       IOTHUB_E2E_REPO_PASSWORD: $(IOTHUB-E2E-REPO-PASSWORD)
       NormalizedRepo: $(NormalizedRepo)
+
   - task: CopyFiles@2
     displayName: 'Copy source tar to artifact staging'
     inputs:
@@ -66,7 +66,6 @@ jobs:
       itemPattern: 'drop/**/*e2e_exe'
   
   - script: |
-    # Write your commands here
     sudo -E ~/env_vars.sh
     chmod -R 777 drop/
     drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
