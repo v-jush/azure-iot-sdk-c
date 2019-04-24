@@ -6,13 +6,9 @@ variables:
 
 jobs:
 - job: Cross_Compile
+  pool: aziotbld-lin02
   steps:
   
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-      architecture: 'x64'
-
   - script: |
       python3 -m pip install -r $(ClientLibrary.FrameworkRoot)/devops/pyscripts/requirements.txt
     displayName: "pip install requirements.txt"
@@ -60,6 +56,7 @@ jobs:
 
 
 - job: 'Run_Raspi_E2E_Tests'
+  pool: horton-raspi-c
   steps:
   - checkout: none
   - task: DownloadBuildArtifacts@0
