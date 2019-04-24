@@ -28,12 +28,16 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 
 #WORKDIR RPiTools
 
+ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
+ENV OPENSSL_SOURCE=openssl-1.1.1b
+ENV CURL_SOURCE=curl-7.64.0
+ENV UTIL_LINUX_SOURCE=util-linux-2.32-rc2
+
 ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
-RUN mkdir gcc-linaro
-RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz
-RUN tar -xvf gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz gcc-linaro
+RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
+RUN tar -xvzf ${LINARO_SOURCE}.tar.xz 
 
 # Set up environment variables for builds
 
@@ -55,9 +59,8 @@ ENV TOOLCHAIN_PREFIX=${TOOLCHAIN_SYSROOT}/usr
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 
 # Download OpenSSL source and expand it
-RUN mkdir openssl_source
-RUN wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
-RUN tar -xvfz openssl-1.1.1b.tar.gz -C openssl_source
+RUN wget https://www.openssl.org/source/${OPENSSL_SOURCE}.tar.gz
+RUN tar -xvzf ${OPENSSL_SOURCE}.tar.gz 
 
 # Build OpenSSL
 
@@ -68,9 +71,8 @@ RUN make install
 WORKDIR ..
 
 # Download cURL source and expand it
-RUN mkdir curl_source
-RUN wget http://curl.haxx.se/download/curl-7.64.0.tar.gz
-RUN tar -xvfz curl-7.64.0.tar.gz -C curl_source
+RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
+RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
@@ -81,9 +83,8 @@ RUN make install
 WORKDIR ..
 
 # Download the Linux utilities for libuuid and expand it
-RUN MKDIR util-linux
-RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/util-linux-2.32-rc2.tar.gz
-RUN tar -xvfz util-linux-2.32-rc2.tar.gz -C util-linux
+RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
+RUN tar -xvfz ${UTIL_LINUX_SOURCE}.tar.gz 
 
 # Build uuid
 WORKDIR util-linux
