@@ -130,16 +130,15 @@ def push_images(tags):
 
 def extract_artifacts(tags):
     print(print_separator)
-    print("PUBLISHING BUILD ARTIFACT")
+    print("GETTING CMAKE AS ARCHIVE")
     print(print_separator)
     # Publish directory should be in the top level folder of the sdk.
-    publish_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../"))
-
-
+    source_artifacts = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../source_artifacts.tar"))
+    
     api_client = docker.APIClient(base_url="unix://var/run/docker.sock")
-    bits, stat = api_client.get_archive(tags.docker_full_image_name,"/sdk/cmake")
+    bits, stat = api_client.get_archive(tags.docker_image_name,"/sdk/cmake")
     print(stat)
-    with open('./source_artifacts.tar', 'wb') as f:
+    with open(source_artifacts, 'wb') as f:
         for chunk in bits:
             f.write(chunk)
     
