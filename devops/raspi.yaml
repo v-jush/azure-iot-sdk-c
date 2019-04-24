@@ -95,13 +95,13 @@ jobs:
     inputs:
       artifactName: drop
       itemPattern: 'drop/**/*e2e_exe'
-      
+
   - task: Bash@3
     inputs:
       targetType: inline
       script:
         chmod -R 777 drop/
-        drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+        drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
         call jenkins\collect_results.cmd raspi
       workingDirectory: '$(System.ArtifactsDirectory)'
       displayName: 'Command Line Script'
