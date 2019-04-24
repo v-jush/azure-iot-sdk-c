@@ -96,11 +96,24 @@ jobs:
       artifactName: drop
       itemPattern: 'drop/**/*e2e_exe'
 
+  - script: |
+      export IOTHUB_CONNECTION_STRING='$(IOTHUB-CONNECTION-STRING)'
+      export IOTHUB_DEVICE_ID=$(IOTHUB-DEVICE-ID)
+      export IOTHUB_DEVICE_KEY='$(IOTHUB-DEVICE-KEY)'
+      export IOTHUB_EVENTHUB_CONNECTION_STRING='$(IOTHUB-EVENTHUB-CONNECTION-STRING)'
+      export IOTHUB_EVENTHUB_LISTEN_NAME='$(IOTHUB-EVENTHUB-LISTEN-NAME)'
+      export IOTHUB_E2E_X509_THUMBPRINT=$(IOTHUB-E2E-X509-THUMBPRINT)
+      export IOTHUB_E2E_X509_CERT_BASE64='$(IOTHUB-E2E-X509-CERT-BASE64)'
+      export IOTHUB_E2E_X509_PRIVATE_KEY_BASE64='$(IOTHUB-E2E-PRIVATE-KEY-BASE64)'
+      export IOTHUB_EVENTHUB_CONSUMER_GROUP='$(IOTHUB-EVENTHUB-CONSUMER-GROUP)'
+      export IOTHUB_PARTITION_COUNT=16
+    displayName: "build raspi-c docker image"
+    condition: succeeded()
+
   - task: Bash@3
     inputs:
       targetType: inline
       script:
-        sudo -E ~/env_vars.sh
         chmod -R 777 drop/
         drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
         call jenkins\collect_results.cmd raspi
