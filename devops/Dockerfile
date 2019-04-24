@@ -55,7 +55,6 @@ ENV NM=${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-nm
 
 ENV LDFLAGS="-L${TOOLCHAIN_SYSROOT}/usr/lib"
 ENV LIBS="-lssl -lcrypto -ldl -lpthread"
-ENV TOOLCHAIN_PREFIX=${TOOLCHAIN_SYSROOT}/usr
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 
 # Download OpenSSL source and expand it
@@ -64,11 +63,11 @@ RUN tar -xvzf ${OPENSSL_SOURCE}.tar.gz
 
 # Build OpenSSL
 
-WORKDIR ${OPENSSL_SOURCE}
+WORKDIR /${WORK_ROOT}/${OPENSSL_SOURCE}
 RUN ./Configure linux-generic32 shared --prefix=${TOOLCHAIN_PREFIX} --openssldir=${TOOLCHAIN_PREFIX}
 RUN make
 RUN make install
-WORKDIR ..
+WORKDIR /${WORK_ROOT}
 
 # Download cURL source and expand it
 RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
@@ -76,22 +75,22 @@ RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
-WORKDIR ${CURL_SOURCE}
+WORKDIR /${WORK_ROOT}/${CURL_SOURCE}
 RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu
 RUN make
 RUN make install
-WORKDIR ..
+WORKDIR /${WORK_ROOT}
 
 # Download the Linux utilities for libuuid and expand it
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
 RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
 
 # Build uuid
-WORKDIR ${UTIL_LINUX_SOURCE}
+WORKDIR /${WORK_ROOT}/${UTIL_LINUX_SOURCE}
 RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
 RUN make
 RUN make install
-WORKDIR ..
+WORKDIR /${WORK_ROOT}
 
 #RUN ls -al ../RPiBuild
 
@@ -117,17 +116,20 @@ RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> toolchain.cmake
 RUN ls -al
 
 # Build the SDK. This will use the OpenSSL, cURL and uuid binaries that we built before
-RUN ./devops/sdk_build.sh ${TOOLCHAIN_PREFIX}
+RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON -Drun_unittests=:BOOL=ON ..
+RUN make -j 2
+RUN make install
 
 # Phase 2: grab the code we want to test and rebuild
 ARG CLIENTLIBRARY_COMMIT_SHA
-RUN ./devops/fetch.sh 
+RUN git fetch origin 
+RUN git checkout $CLIENTLIBRARY_COMMIT_SHA
+RUN git submodule update --init --recursive
+RUN ls -al
 
-RUN ./devops/sdk_build.sh ${TOOLCHAIN_PREFIX}
-
-# RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON ..
-# RUN make -j 2
-# RUN make install
+RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON -Drun_unittests=:BOOL=ON ..
+RUN make -j 2
+RUN make install
 # or RUN cmake --build .
 
 # Finally a sanity check to make sure the files are there
@@ -136,7 +138,7 @@ RUN ls -al ${TOOLCHAIN_PREFIX}/include
 
 RUN ls -la ./
 # Go to project root
-WORKDIR ..
+WORKDIR /
 
 
 
