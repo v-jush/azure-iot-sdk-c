@@ -117,15 +117,13 @@ RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> toolchain.cmake
 RUN ls -al
 
 # Build the SDK. This will use the OpenSSL, cURL and uuid binaries that we built before
-COPY ./devops/sdk_build.sh /
-RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
+RUN ./devops/sdk_build.sh ${TOOLCHAIN_PREFIX}
 
 # Phase 2: grab the code we want to test and rebuild
 ARG CLIENTLIBRARY_COMMIT_SHA
-COPY ./devops/fetch.sh /
-RUN /fetch.sh 
+RUN ./devops/fetch.sh 
 
-RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
+RUN ./devops/sdk_build.sh ${TOOLCHAIN_PREFIX}
 
 # RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON ..
 # RUN make -j 2
