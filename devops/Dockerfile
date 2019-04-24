@@ -37,7 +37,7 @@ ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
 RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
-RUN tar -xvzf ${LINARO_SOURCE}.tar.xz 
+RUN tar -xvf ${LINARO_SOURCE}.tar.xz 
 
 # Set up environment variables for builds
 
