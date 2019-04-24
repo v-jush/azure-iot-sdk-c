@@ -7,8 +7,7 @@ cd cmake
 
 cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
     -Duse_prov_client:BOOL=OFF 
-    -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} \ 
-    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} \
     -Drun_e2e_tests:BOOL=ON \
     -Drun_unittests=ON \
     ..
