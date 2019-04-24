@@ -55,10 +55,17 @@ jobs:
       archiveFilePatterns: '*.tar' 
       destinationFolder: '$(Build.SourcesDirectory)/source_artifacts'
 
+  - script: |
+      ls -al
+      cd $(Build.SourcesDirectory)
+      ls -al
+    displayName: "list stuff in current directory"
+
+
   - task: CopyFiles@2
     displayName: 'Copy source_artifacts to artifact staging'
     inputs:
-      sourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
+      sourceFolder: 'source_artifacts'
       contents: '**\*'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
     condition: succeeded()
