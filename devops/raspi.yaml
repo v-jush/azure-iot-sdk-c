@@ -5,7 +5,7 @@ variables:
 
 
 jobs:
-- job: 'Cross Compile SDK for Raspi'
+- job: 'Cross_Compile_SDK_To_Raspi'
   steps:
   
   - task: UsePythonVersion@0
