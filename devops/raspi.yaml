@@ -1,17 +1,13 @@
-variables:
-  Horton.Repo: $(Build.Repository.Uri)
-  Horton.Commit: $(Build.SourceBranch)
-
-name: $(BuildID)_$(Horton.Commit)_$(BuildDefinitionName)
-variables:
-  Horton.FrameworkRoot: $(Build.SourcesDirectory)
-jobs:
-- template: templates/jobs-gate-c.yaml
-
 parameters:
   repo: ''
   commit: ''
   job_tag: 'linux'
+
+variables:
+  Horton.Repo: $(Build.Repository.Uri)
+  Horton.Commit: $(Build.SourceBranch)
+  Horton.FrameworkRoot: $(Build.SourcesDirectory)
+  
 
 jobs:
 - job: 'build_${{ parameters.job_tag }}_container'
