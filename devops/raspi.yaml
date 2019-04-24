@@ -84,4 +84,5 @@ jobs:
     inputs:
       testResultsFiles: "**/results-junit.xml"
       testRunTitle: 'raspberry pi'
-    dependsOn: Cross_Compile
+  dependsOn: Cross_Compile
+  condition: succeeded()
