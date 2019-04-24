@@ -80,10 +80,10 @@ jobs:
   - task: Bash@3
     inputs:
       targetType: inline
-      script:
-        chmod -R 777 drop/
-        setcap cap_net_raw,cap_net_admin+ep drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
-        drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+      script: |
+          chmod -R 777 drop
+          sudo setcap cap_net_raw,cap_net_admin+ep drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+          drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
       workingDirectory: '$(System.ArtifactsDirectory)'
       displayName: 'Command Line Script'
     env:
