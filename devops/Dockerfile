@@ -2,10 +2,10 @@
 FROM debian:stretch
 
 # Fetch and install all outstanding updates
-RUN apt-get update && apt-get -y upgrade
+RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
-RUN sudo apt-get install -y git build-essential pkg-config cmake libssl-dev uuid-dev xz-utils
+RUN apt install --fix-missing -y git build-essential pkg-config cmake libssl-dev uuid-dev xz-utils
 
 # SSH Tools
 
