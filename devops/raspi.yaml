@@ -28,7 +28,7 @@ jobs:
     failOnStderr: true
   
   - script: |
-      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit ${{ Horton.Commit }} 
+      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
     displayName: "build docker image ${{ parameters.language }}"
     condition: and(succeeded())
     env: 
@@ -54,4 +54,3 @@ jobs:
       artifactName: 'drop'
       publishLocation: 'Container'
     condition: always()
-
