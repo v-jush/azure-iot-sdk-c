@@ -1,7 +1,7 @@
 variables:
-  Horton.Repo: $(Build.Repository.Uri)
-  Horton.Commit: $(Build.SourceBranch)
-  Horton.FrameworkRoot: $(Build.SourcesDirectory)
+  ClientLibrary.Repo: $(Build.Repository.Uri)
+  ClientLibrary.Commit: $(Build.SourceBranch)
+  ClientLibrary.FrameworkRoot: $(Build.SourcesDirectory)
 
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       architecture: 'x64'
 
   - script: |
-      python3 -m pip install -r $(Horton.FrameworkRoot)/devops/pyscripts/requirements.txt
+      python3 -m pip install -r $(ClientLibrary.FrameworkRoot)/devops/pyscripts/requirements.txt
     displayName: "pip install requirements.txt"
     condition: succeeded()
 
@@ -27,13 +27,13 @@ jobs:
       Write-Host "normalizedRepo=${NormalizedRepo}"
     displayName: Removing github.com from repo name if necessary
     env:
-      Repo: $(Horton.Repo)
+      Repo: $(ClientLibrary.Repo)
     ignoreLASTEXITCODE: false
     errorActionPreference: Stop
     failOnStderr: true
   
   - script: |
-      python3 $(Horton.FrameworkRoot)/devops/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
+      python3 $(ClientLibrary.FrameworkRoot)/devops/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(ClientLibrary.Commit) 
     displayName: "build raspi-c docker image"
     condition: succeeded()
     env: 

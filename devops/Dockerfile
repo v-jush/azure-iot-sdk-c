@@ -96,9 +96,9 @@ WORKDIR ..
 #RUN ls -al ../RPiBuild
 
 # clone azure  
-ARG SDK_REPO
+ARG CLIENTLIBRARY_REPO
 WORKDIR /sdk
-RUN git clone https://github.com/$SDK_REPO .
+RUN git clone https://github.com/$CLIENTLIBRARY_REPO .
 RUN git submodule update --init --recursive
 
 RUN ls -al
@@ -120,7 +120,7 @@ COPY ./sdk_build.sh /
 RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
 
 # Phase 2: grab the code we want to test and rebuild
-ARG COMMIT_SHA_OR_BRANCH
+ARG CLIENTLIBRARY_COMMIT_SHA
 COPY ./fetch.sh /
 RUN /fetch.sh 
 
