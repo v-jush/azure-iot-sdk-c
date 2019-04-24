@@ -104,7 +104,7 @@ RUN git submodule update --init --recursive
 
 # Raspi Branch Specific Work
 RUN git checkout raspi-pipeline
-RUN chmod 755 ./devops/sdk_build.sh ./devops/fetch.sh
+RUN chmod 755 /sdk/devops/sdk_build.sh /sdk/devops/fetch.sh
 
 # CMAKE
 RUN mkdir cmake
