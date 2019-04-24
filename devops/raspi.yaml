@@ -16,7 +16,7 @@ jobs:
   - script: |
       python3 -m pip install -r $(Horton.FrameworkRoot)/devops/pyscripts/requirements.txt
     displayName: "pip install requirements.txt"
-    condition: and(succeeded(), eq(variables['buildImage'],'yes'))
+    condition: succeeded()
 
   - powershell: |
       $NormalizedRepo=$env:Repo
