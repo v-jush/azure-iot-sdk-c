@@ -84,7 +84,7 @@ WORKDIR ..
 
 # Download the Linux utilities for libuuid and expand it
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
-RUN tar -xvfz ${UTIL_LINUX_SOURCE}.tar.gz 
+RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
 
 # Build uuid
 WORKDIR ${UTIL_LINUX_SOURCE}
