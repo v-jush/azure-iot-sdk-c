@@ -48,11 +48,11 @@ jobs:
       ls -al
       cd $(Build.SourcesDirectory)
       ls -al
-      displayName: "list stuff in current directory"
+    displayName: "list stuff in current directory"
 
   - task: ExtractFiles@1
     inputs:
-      archiveFilePatterns: '$(Build.SourcesDirectory)/source_artifacts.tar'
+      archiveFilePatterns: '*.tar' 
       destinationFolder: '$(Build.SourcesDirectory)/source_artifacts'
 
   - task: CopyFiles@2
