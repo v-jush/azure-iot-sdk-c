@@ -1,16 +1,11 @@
-parameters:
-  repo: ''
-  commit: ''
-  job_tag: 'linux'
-
 variables:
   Horton.Repo: $(Build.Repository.Uri)
   Horton.Commit: $(Build.SourceBranch)
   Horton.FrameworkRoot: $(Build.SourcesDirectory)
-  
+
 
 jobs:
-- job: 'build_${{ parameters.job_tag }}_container'
+- job: 'Cross Compile SDK for Raspi'
   steps:
   
   - task: UsePythonVersion@0
@@ -28,13 +23,13 @@ jobs:
       Write-Host "normalizedRepo=${NormalizedRepo}"
     displayName: Removing github.com from repo name if necessary
     env:
-      Repo: ${{ parameters.repo }}
+      Repo: $(Horton.Repo)
     ignoreLASTEXITCODE: false
     errorActionPreference: Stop
     failOnStderr: true
   
   - script: |
-      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit ${{ parameters.commit }} 
+      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit ${{ Horton.Commit }} 
     displayName: "build docker image ${{ parameters.language }}"
     condition: and(succeeded())
     env: 
