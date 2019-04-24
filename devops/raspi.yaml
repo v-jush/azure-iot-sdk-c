@@ -61,7 +61,7 @@ jobs:
 
 - job: 'Run_Raspi_E2E_Tests'
   steps:
-  -checkout: none
+  - checkout: none
   - task: DownloadBuildArtifacts@0
     displayName: 'Download Build Artifacts'
     inputs:
