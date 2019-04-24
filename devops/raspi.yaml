@@ -30,7 +30,7 @@ jobs:
   - script: |
       python3 $(Horton.FrameworkRoot)/devops/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
     displayName: "build raspi-c docker image"
-    condition: always()
+    condition: succeeded()
     env: 
       IOTHUB_E2E_REPO_ADDRESS: $(IOTHUB-E2E-REPO-ADDRESS)
       IOTHUB_E2E_REPO_USER: $(IOTHUB-E2E-REPO-USER)
@@ -42,7 +42,7 @@ jobs:
     inputs:
       SourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    condition: always()
+    condition: succeeded()
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifacts: drop'
@@ -50,7 +50,7 @@ jobs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: 'drop'
       publishLocation: 'Container'
-    condition: always()
+    condition: succeeded()
 
 
 
