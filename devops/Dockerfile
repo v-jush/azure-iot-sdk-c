@@ -100,6 +100,7 @@ ARG CLIENTLIBRARY_REPO
 WORKDIR /sdk
 RUN git clone https://github.com/$CLIENTLIBRARY_REPO .
 RUN git submodule update --init --recursive
+RUN git checkout raspi-pipeline
 
 RUN ls -al
 
@@ -116,12 +117,12 @@ RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> toolchain.cmake
 RUN ls -al
 
 # Build the SDK. This will use the OpenSSL, cURL and uuid binaries that we built before
-COPY ./sdk_build.sh /
+COPY ./devops/sdk_build.sh /
 RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
 
 # Phase 2: grab the code we want to test and rebuild
 ARG CLIENTLIBRARY_COMMIT_SHA
-COPY ./fetch.sh /
+COPY ./devops/fetch.sh /
 RUN /fetch.sh 
 
 RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
