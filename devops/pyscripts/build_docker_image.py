@@ -11,8 +11,7 @@ import colorama
 from colorama import Fore
 
 colorama.init(autoreset=True)
-
-dockerfile_directory = os.path.normpath(os.path.join(script_dir, "../"))
+dockerfile_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
 
 default_repo = "(Azure/azure-iot-sdk-BLAH)"
 
