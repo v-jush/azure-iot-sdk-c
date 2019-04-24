@@ -26,6 +26,7 @@ fi
 
 printf 'Setting variables by calling bashrc'
 source ~/.bashrc
+[ $? -eq 0 ] || { echo "bashrc source failed"; exit 1; }
 
 # BUILD AND INSTALL NEW CURL
 wget https://curl.haxx.se/download/curl-7.64.1.tar.gz
@@ -35,7 +36,7 @@ tar -C curl_source -xzvf curl-7.64.1.tar.gz
 cd curl_source/curl-7.64.1/
 ./configure --prefix=$CURL_ROOT --disable-shared --without-zlib --with-ssl --enable-static
 make -j
-make install
+sudo make install
 # END GET NECESARY PACKAGES 
 
 # BUILD THE SDK
@@ -46,17 +47,5 @@ cmake -Drun_unittests=ON -Drun_e2e_tests=ON -DCMAKE_BUILD_TYPE=Debug -DCURL_LIBR
 cd iothub_client/tests/iothubclient_mqtt_e2e
 cmake --build .
 sudo setcap cap_net_raw,cap_net_admin+ep iothubclient_mqtt_e2e_exe
-# END BUILD THE SDK
-
-# RUN THE E2E TEST
-read -p "Have you added your credentials? " -n 1 -r
-echo   # move to a new line
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    printf "running iothubclient_mqtt_e2e_exe...\n"
-else 
-    printf "please export the necessary IOTHUB variables before running the test.\n"
-    [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1
-fi
 ./iothubclient_mqtt_e2e_exe
 # END RUN THE E2E TEST
