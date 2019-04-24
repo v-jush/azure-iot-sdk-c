@@ -47,7 +47,7 @@ jobs:
   - task: CopyFiles@2
     displayName: 'Copy source tar to artifact staging'
     inputs:
-      SourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
+      Contents: '$(Build.SourcesDirectory)/source_artifacts.tar'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
     condition: succeeded()
 

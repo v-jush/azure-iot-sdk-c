@@ -11,7 +11,6 @@ import colorama
 from colorama import Fore
 
 colorama.init(autoreset=True)
-dockerfile_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
 
 default_repo = "(Azure/azure-iot-sdk-BLAH)"
 
@@ -62,6 +61,7 @@ def print_filtered_docker_line(line):
 
 
 def build_image(tags):
+    
     print(print_separator)
     print("BUILDING IMAGE")
     print(print_separator)
@@ -83,6 +83,7 @@ def build_image(tags):
         cache_from = []
 
     dockerfile = "Dockerfile"
+    dockerfile_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
 
     print(
         Fore.YELLOW
@@ -127,6 +128,21 @@ def push_images(tags):
         ):
             print_filtered_docker_line(line)
 
+def extract_artifacts(tags):
+    print(print_separator)
+    print("PUBLISHING BUILD ARTIFACT")
+    print(print_separator)
+    # Publish directory should be in the top level folder of the sdk.
+    publish_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../"))
+
+
+    api_client = docker.APIClient(base_url="unix://var/run/docker.sock")
+    bits, stat = api_client.get_archive(tags.docker_full_image_name,"/sdk/cmake")
+    print(stat)
+    with open('./source_artifacts.tar', 'wb') as f:
+        for chunk in bits:
+            f.write(chunk)
+    
 
 def prefetch_cached_images(tags):
     if docker_tags.running_on_azure_pipelines():
@@ -165,3 +181,4 @@ prefetch_cached_images(tags)
 build_image(tags)
 tag_images(tags)
 push_images(tags)
+extract_artifacts(tags)
