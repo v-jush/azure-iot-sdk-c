@@ -28,7 +28,7 @@ jobs:
     failOnStderr: true
   
   - script: |
-      python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
+      python3 $(Horton.FrameworkRoot)/devops/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
     displayName: "build raspi-c docker image"
     condition: always()
     env: 
@@ -51,3 +51,32 @@ jobs:
       artifactName: 'drop'
       publishLocation: 'Container'
     condition: always()
+
+
+
+- job: 'Run_Raspi_E2E_Tests'
+  steps:
+  
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download Build Artifacts'
+    inputs:
+      artifactName: drop
+      itemPattern: 'drop/**/*e2e_exe'
+  
+  - script: |
+    sudo -E ~/env_vars.sh
+    chmod -R 777 drop/
+    drop/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+    call jenkins\collect_results.cmd raspi
+
+    workingDirectory: '$(System.ArtifactsDirectory)'
+
+    displayName: 'Command Line Script'
+
+    continueOnError: true
+
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results "**/results-junit.xml"'
+    inputs:
+      testResultsFiles: "**/results-junit.xml"
+      testRunTitle: 'raspberry pi'
