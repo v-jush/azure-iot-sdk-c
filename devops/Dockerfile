@@ -24,10 +24,6 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh && touch /root/.ssh/authorized_k
 RUN ssh-keygen -b 2048 -t rsa -f /root/.ssh/remote-debug -q -N ""
 RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 
-# Get sdk
-WORKDIR /sdk
-git clone https://github.com/Azure/azure-iot-sdk-c
-
 #RUN mkdir RPiTools
 
 #WORKDIR RPiTools
