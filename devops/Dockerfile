@@ -29,7 +29,7 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 #WORKDIR RPiTools
 
 ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
-ENV OPENSSL_SOURCE=openssl-1.1.1b
+ENV OPENSSL_SOURCE=openssl-1.0.2o
 ENV CURL_SOURCE=curl-7.64.0
 ENV UTIL_LINUX_SOURCE=util-linux-2.32-rc2
 
