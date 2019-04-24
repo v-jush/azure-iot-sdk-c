@@ -65,7 +65,7 @@ jobs:
   - task: CopyFiles@2
     displayName: 'Copy source_artifacts to artifact staging'
     inputs:
-      sourceFolder: 'source_artifacts'
+      sourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
       contents: '**\*'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
     condition: succeeded()
