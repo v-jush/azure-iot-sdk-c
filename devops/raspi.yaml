@@ -44,10 +44,16 @@ jobs:
       IOTHUB_E2E_REPO_PASSWORD: $(IOTHUB-E2E-REPO-PASSWORD)
       NormalizedRepo: $(NormalizedRepo)
 
+  - script: |
+      ls -al
+      cd $(Build.SourcesDirectory)
+      ls -al
+      displayName: "list stuff in current directory"
+
   - task: ExtractFiles@1
     inputs:
-      archiveFilePatterns: '**\source_artifacts.tar'
-      destinationFolder: '$(Build.SourcesDirectory)\\source_artifacts'
+      archiveFilePatterns: '$(Build.SourcesDirectory)/source_artifacts.tar'
+      destinationFolder: '$(Build.SourcesDirectory)/source_artifacts'
 
   - task: CopyFiles@2
     displayName: 'Copy source_artifacts to artifact staging'
