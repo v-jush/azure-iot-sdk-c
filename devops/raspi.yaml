@@ -29,7 +29,7 @@ jobs:
   
   - script: |
       python3 $(Horton.FrameworkRoot)/pyscripts/build_docker_image.py --repo ${NormalizedRepo}  --commit $(Horton.Commit) 
-    displayName: "build docker image ${{ parameters.language }}"
+    displayName: "build raspi-c docker image"
     condition: and(succeeded())
     env: 
       IOTHUB_E2E_REPO_ADDRESS: $(IOTHUB-E2E-REPO-ADDRESS)
