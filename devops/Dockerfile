@@ -128,12 +128,14 @@ RUN make install
 # Phase 2: grab the code we want to test and rebuild
 ARG CLIENTLIBRARY_COMMIT_SHA
 
+WORKDIR /sdk
 RUN git fetch origin 
 RUN git checkout $CLIENTLIBRARY_COMMIT_SHA
 RUN git submodule update --init --recursive
 RUN ls -al
 
-RUN cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Duse_prov_client:BOOL=OFF -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN_PREFIX} -Drun_e2e_tests:BOOL=ON -Drun_unittests=:BOOL=ON ..
+WORKDIR /sdk/cmake
+RUN cmake ..
 RUN make -j 2
 RUN make install
 # or RUN cmake --build .
