@@ -15,6 +15,7 @@ dockerfile_directory = os.path.normpath(os.path.join(os.path.dirname(os.path.rea
 
 default_repo = "(Azure/azure-iot-sdk-BLAH)"
 
+parser = argparse.ArgumentParser(description="build docker image for testing")
 parser.add_argument("--repo", help="repo with source", type=str, default=default_repo)
 parser.add_argument(
     "--commit", help="commit to apply (ref or branch)", type=str, default="master"
