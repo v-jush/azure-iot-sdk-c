@@ -136,7 +136,19 @@ def extract_artifacts(tags):
     source_artifacts = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../source_artifacts.tar"))
     
     api_client = docker.APIClient(base_url="unix://var/run/docker.sock")
-    bits, stat = api_client.get_archive(tags.docker_image_name,"/sdk/cmake")
+    containerlist = api_client.containers()
+    for container in containerlist:
+        print("Container:")
+        print(container)
+        print()
+    for image in api_client.images():
+        print("Image:")
+        print(image)
+        print()
+    con = api_client.create_container(tags.docker_image_name)
+    print(con)
+
+    bits, stat = api_client.get_archive(con.Id,"/sdk/cmake")
     print(stat)
     with open(source_artifacts, 'wb') as f:
         for chunk in bits:
