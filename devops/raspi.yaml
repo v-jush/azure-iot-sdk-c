@@ -6,6 +6,7 @@ variables:
 
 jobs:
 - job: Cross_Compile
+  pool: aziotbld-lin02
   steps:
   
   - task: UsePythonVersion@0
@@ -60,6 +61,7 @@ jobs:
 
 
 - job: 'Run_Raspi_E2E_Tests'
+  pool: horton-raspi-c
   steps:
   - checkout: none
   - task: DownloadBuildArtifacts@0
