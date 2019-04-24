@@ -41,6 +41,7 @@ sudo make install
 
 # BUILD THE SDK
 cd ~
+git clone --recursive https://github.com/Azure/azure-iot-sdk-c
 cd azure-iot-sdk-c
 mkdir cmake && cd cmake
 cmake -Drun_unittests=ON -Drun_e2e_tests=ON -DCMAKE_BUILD_TYPE=Debug -DCURL_LIBRARY=$CURL_ROOT/lib/libcurl.a -DCURL_INCLUDE_DIR=$CURL_ROOT/include  ..

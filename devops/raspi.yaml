@@ -44,36 +44,19 @@ jobs:
       IOTHUB_E2E_REPO_PASSWORD: $(IOTHUB-E2E-REPO-PASSWORD)
       NormalizedRepo: $(NormalizedRepo)
 
-  - script: |
-      ls -al
-      cd $(Build.SourcesDirectory)
-      ls -al
-    displayName: "list stuff in current directory"
-
   - task: ExtractFiles@1
     inputs:
       archiveFilePatterns: '*.tar' 
       destinationFolder: '$(Build.SourcesDirectory)/source_artifacts'
 
   - script: |
-      ls -al
       cd $(Build.SourcesDirectory)
       ls -al
-    displayName: "list stuff in current directory"
-
+    displayName: "list Build.SourcesDirectory"
 
   - script: |
       cp -r $(Build.SourcesDirectory)/source_artifacts $(Build.ArtifactStagingDirectory)
-    displayName: "Copy Fiels Because The CopyFiles Task Sucks"
-
-  - task: CopyFiles@2
-    displayName: 'Copy source_artifacts to artifact staging'
-    inputs:
-      sourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
-      contents: '**\*'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    condition: succeeded()
-
+    displayName: "Copy Files Manually"
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifacts: drop'
@@ -82,8 +65,6 @@ jobs:
       artifactName: 'drop'
       publishLocation: 'Container'
     condition: succeeded()
-
-
 
 - job: 'Run_Raspi_E2E_Tests'
   pool: horton-raspi-c
