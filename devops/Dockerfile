@@ -1,11 +1,40 @@
 # Start with the latest version of the Debian Docker container
 FROM debian:stretch
 
+
+
 # Fetch and install all outstanding updates
 RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
 RUN apt install --fix-missing -y wget git build-essential pkg-config cmake libssl-dev uuid-dev xz-utils
+
+ARG CLIENTLIBRARY_REPO
+WORKDIR /sdk
+RUN git clone https://github.com/$CLIENTLIBRARY_REPO .
+RUN git submodule update --init --recursive
+RUN git checkout raspi-pipeline
+
+RUN ls -al
+
+# Create a cmake toolchain file on the fly
+RUN echo "SET(CMAKE_SYSTEM_NAME Linux)     # this one is important" > toolchain.cmake
+RUN echo "SET(CMAKE_SYSTEM_VERSION 1)      # this one not so much" >> toolchain.cmake
+
+RUN echo "SET(CMAKE_C_COMPILER ${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-gcc)" >> toolchain.cmake
+RUN echo "SET(CMAKE_CXX_COMPILER ${TOOLCHAIN_EXES}/${TOOLCHAIN_NAME}-g++)" >> toolchain.cmake
+RUN echo "SET(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_SYSROOT})" >> toolchain.cmake
+RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> toolchain.cmake
+RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> toolchain.cmake
+RUN echo "SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> toolchain.cmake
+RUN ls -al
+
+# Build the SDK. This will use the OpenSSL, cURL and uuid binaries that we built before
+COPY /sdk/devops/sdk_build.sh /
+RUN /sdk_build.sh ${TOOLCHAIN_PREFIX}
+
+
+
 
 # SSH Tools
 
