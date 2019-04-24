@@ -96,11 +96,15 @@ WORKDIR /${WORK_ROOT}
 
 # clone azure  
 ARG CLIENTLIBRARY_REPO
+
 WORKDIR /sdk
+
 RUN git clone https://github.com/$CLIENTLIBRARY_REPO .
 RUN git submodule update --init --recursive
 RUN git checkout raspi-pipeline
 
+RUN mkdir cmake
+WORKDIR /sdk/cmake
 RUN ls -al
 
 # Create a cmake toolchain file on the fly
@@ -123,6 +127,7 @@ RUN make install
 
 # Phase 2: grab the code we want to test and rebuild
 ARG CLIENTLIBRARY_COMMIT_SHA
+
 RUN git fetch origin 
 RUN git checkout $CLIENTLIBRARY_COMMIT_SHA
 RUN git submodule update --init --recursive
@@ -138,6 +143,7 @@ RUN ls -al ${TOOLCHAIN_PREFIX}/lib
 RUN ls -al ${TOOLCHAIN_PREFIX}/include
 
 RUN ls -la ./
+
 # Go to project root
 WORKDIR /
 
