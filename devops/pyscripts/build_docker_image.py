@@ -66,10 +66,6 @@ def build_image(tags):
     print("BUILDING IMAGE")
     print(print_separator)
 
-    force_flag = 0
-    if os.stat(dockerfile_directory + "/source.tar.gz").st_size > 0:
-        print("source.tar.gz exists.  Setting force flag.")
-        force_flag = datetime.datetime.now().timestamp()
 
     api_client = docker.APIClient(base_url="unix://var/run/docker.sock")
     build_args = {
