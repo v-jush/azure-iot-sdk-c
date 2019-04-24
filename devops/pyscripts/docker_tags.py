@@ -3,7 +3,6 @@
 import os
 import docker
 import github
-from image_variants import get_default_variant
 
 
 class DockerTags:
