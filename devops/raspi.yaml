@@ -44,12 +44,19 @@ jobs:
       IOTHUB_E2E_REPO_PASSWORD: $(IOTHUB-E2E-REPO-PASSWORD)
       NormalizedRepo: $(NormalizedRepo)
 
-  - task: CopyFiles@2
-    displayName: 'Copy source tar to artifact staging'
+  - task: ExtractFiles@1
     inputs:
-      Contents: '$(Build.SourcesDirectory)/source_artifacts.tar'
+      archiveFilePatterns: '**\source_artifacts.tar'
+      destinationFolder: '$(Build.SourcesDirectory)\\source_artifacts'
+
+  - task: CopyFiles@2
+    displayName: 'Copy source_artifacts to artifact staging'
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)/source_artifacts'
+      contents: '**\*'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
     condition: succeeded()
+
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish Artifacts: drop'
@@ -65,12 +72,13 @@ jobs:
   pool: horton-raspi-c
   steps:
   - checkout: none
+  
   - task: DownloadBuildArtifacts@0
     displayName: 'Download Build Artifacts'
     inputs:
       artifactName: drop
       itemPattern: 'drop/**/*e2e_exe'
-  
+
   - task: Bash@3
     inputs:
       targetType: inline
