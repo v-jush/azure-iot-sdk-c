@@ -12,7 +12,12 @@ jobs:
     inputs:
       versionSpec: '3.x'
       architecture: 'x64'
-  
+
+  - script: |
+      python3 -m pip install -r $(Horton.FrameworkRoot)/devops/pyscripts/requirements.txt
+    displayName: "pip install requirements.txt"
+    condition: and(succeeded(), eq(variables['buildImage'],'yes'))
+
   - powershell: |
       $NormalizedRepo=$env:Repo
       if ($NormalizedRepo -like 'https://github.com/*') {
@@ -56,7 +61,7 @@ jobs:
 
 - job: 'Run_Raspi_E2E_Tests'
   steps:
-  
+  -checkout: none
   - task: DownloadBuildArtifacts@0
     displayName: 'Download Build Artifacts'
     inputs:
@@ -79,3 +84,4 @@ jobs:
     inputs:
       testResultsFiles: "**/results-junit.xml"
       testRunTitle: 'raspberry pi'
+            dependsOn: 'Cross_Compile_SDK_To_Raspi'
