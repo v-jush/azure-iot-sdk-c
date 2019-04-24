@@ -64,7 +64,7 @@ RUN tar -xvzf ${OPENSSL_SOURCE}.tar.gz
 
 # Build OpenSSL
 
-WORKDIR openssl_source
+WORKDIR ${OPENSSL_SOURCE}
 RUN ./Configure linux-generic32 shared --prefix=${TOOLCHAIN_PREFIX} --openssldir=${TOOLCHAIN_PREFIX}
 RUN make
 RUN make install
@@ -76,7 +76,7 @@ RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
-WORKDIR curl_source
+WORKDIR ${CURL_SOURCE}
 RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu
 RUN make
 RUN make install
@@ -87,7 +87,7 @@ RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL
 RUN tar -xvfz ${UTIL_LINUX_SOURCE}.tar.gz 
 
 # Build uuid
-WORKDIR util-linux
+WORKDIR ${UTIL_LINUX_SOURCE}
 RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
 RUN make
 RUN make install
