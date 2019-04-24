@@ -28,15 +28,16 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 
 #WORKDIR RPiTools
 
-ENV WORK_ROOT=/work
+ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
+RUN mkdir gcc-linaro
 RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz
-RUN tar -xvf gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz
+RUN tar -xvf gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf.tar.xz gcc-linaro
 
 # Set up environment variables for builds
 
-ENV TOOLCHAIN_ROOT=${WORK_ROOT}/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
+ENV TOOLCHAIN_ROOT=${WORK_ROOT}/gcc-linaro
 ENV TOOLCHAIN_SYSROOT=${TOOLCHAIN_ROOT}
 ENV TOOLCHAIN_EXES=${TOOLCHAIN_SYSROOT}/bin
 ENV TOOLCHAIN_NAME=arm-linux-gnueabihf
@@ -54,7 +55,7 @@ ENV TOOLCHAIN_PREFIX=${TOOLCHAIN_SYSROOT}/usr
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 
 # Download OpenSSL source and expand it
-
+RUN mkdir openssl_source
 RUN wget https://www.openssl.org/source/openssl-1.1.1b.tar.gz
 RUN tar -xvf openssl-1.1.1b.tar.gz openssl_source
 
@@ -67,23 +68,25 @@ RUN make install
 WORKDIR ..
 
 # Download cURL source and expand it
+RUN mkdir curl_source
 RUN wget http://curl.haxx.se/download/curl-7.64.0.tar.gz
 RUN tar -xvf curl-7.64.0.tar.gz curl_source
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
-WORKDIR curl-7.64.0 curl_source
+WORKDIR curl_source
 RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu
 RUN make
 RUN make install
 WORKDIR ..
 
 # Download the Linux utilities for libuuid and expand it
+RUN MKDIR util-linux
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/util-linux-2.32-rc2.tar.gz
-RUN tar -xvf util-linux-2.32-rc2.tar.gz
+RUN tar -xvf util-linux-2.32-rc2.tar.gz util-linux
 
 # Build uuid
-WORKDIR util-linux-2.32-rc2
+WORKDIR util-linux
 RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
 RUN make
 RUN make install
