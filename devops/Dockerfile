@@ -69,18 +69,6 @@ RUN make
 RUN make install
 WORKDIR /${WORK_ROOT}
 
-# Download cURL source and expand it
-RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
-RUN tar -xvzf ${CURL_SOURCE}.tar.gz
-
-# Build cURL
-# we need to set the path for openssl with --with-ssl=...
-WORKDIR /${WORK_ROOT}/${CURL_SOURCE}
-RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --without-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
-
-RUN make
-RUN make install
-WORKDIR /${WORK_ROOT}
 
 # Download the Linux utilities for libuuid and expand it
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
@@ -94,6 +82,20 @@ RUN make install
 WORKDIR /${WORK_ROOT}
 
 #RUN ls -al ../RPiBuild
+
+# Download cURL source and expand it
+RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
+RUN tar -xvzf ${CURL_SOURCE}.tar.gz
+
+# Build cURL
+# we need to set the path for openssl with --with-ssl=...
+WORKDIR /${WORK_ROOT}/${CURL_SOURCE}
+RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --without-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
+
+RUN make
+RUN make install
+WORKDIR /${WORK_ROOT}
+
 
 # clone azure  
 ARG CLIENTLIBRARY_REPO
