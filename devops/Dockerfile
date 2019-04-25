@@ -5,7 +5,7 @@ FROM debian:stretch
 RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
-RUN apt install -y wget git build-essential cmake xz-utils ca-certificates pkg-config
+RUN apt install --fix-missing -y wget git build-essential cmake xz-utils ca-certificates pkg-config uuid-dev
 
 # SSH Tools
 
@@ -69,7 +69,7 @@ WORKDIR /${WORK_ROOT}
 
 
 # Download the Linux utilities for libuuid and expand it
-ENV UTIL_LINUX_SOURCE=util-linux-2.32-rc2
+ENV UTIL_LINUX_SOURCE=util-linux-2.33-rc2
 RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
 RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
 
