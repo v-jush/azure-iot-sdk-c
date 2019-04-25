@@ -90,7 +90,7 @@ WORKDIR /${WORK_ROOT}
 ########## UTIL LINUX INSTALL ##########
 # Download the Linux utilities for libuuid and expand it
 ENV UTIL_LINUX_SOURCE=util-linux-2.33-rc2
-RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
+RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.33/${UTIL_LINUX_SOURCE}.tar.gz
 RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
 
 # Build uuid
