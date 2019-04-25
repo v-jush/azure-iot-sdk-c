@@ -32,8 +32,8 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
-ENV LINARO_SOURCE=gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf
-RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
+ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
+RUN wget https://releases.linaro.org/components/toolchain/binaries/7.4-2019.02/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
 RUN tar -xvf ${LINARO_SOURCE}.tar.xz 
 
 # Set up environment variables for builds
