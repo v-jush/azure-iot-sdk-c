@@ -108,10 +108,9 @@ ARG CLIENTLIBRARY_REPO
 WORKDIR /sdk
 
 RUN git clone https://github.com/$CLIENTLIBRARY_REPO .
+# !!!Delete this checkout line when we merge this into master!!!!
+RUN git checkout raspi-pipeline 
 RUN git submodule update --init --recursive
-
-# Raspi Branch Specific Work
-RUN git checkout raspi-pipeline
 RUN chmod 755 /sdk/devops/sdk_build.sh /sdk/devops/fetch.sh
 
 # CMAKE
