@@ -90,7 +90,7 @@ RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
 WORKDIR /${WORK_ROOT}/${CURL_SOURCE}
-RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --without-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
+RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
 
 RUN make
 RUN make install

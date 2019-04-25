@@ -107,6 +107,9 @@ else()
     option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" OFF)
 endif()
 
+option(use_sample_trusted_cert "Set flag in samples to use SDK's built-in CA as TrustedCerts" ON)
+
+
 # Enable IoT SDK to act as a module for Edge
 if(${use_edge_modules})
     set(use_prov_client_core ON)
