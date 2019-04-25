@@ -5,7 +5,7 @@ FROM debian:stretch
 RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
-RUN apt-get install -y wget git cmake xz-utils
+RUN apt install -y wget git cmake xz-utils ca-certificates
 
 # SSH Tools
 
