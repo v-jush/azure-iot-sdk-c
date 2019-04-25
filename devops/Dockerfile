@@ -5,7 +5,7 @@ FROM debian:stretch
 RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
-RUN apt install -y wget git cmake xz-utils ca-certificates
+RUN apt install -y wget git build-essential cmake xz-utils ca-certificates pkg-config
 
 # SSH Tools
 
@@ -83,14 +83,14 @@ WORKDIR /${WORK_ROOT}
 #RUN ls -al ../RPiBuild
 
 # Download cURL source and expand it
-ENV CURL_SOURCE=curl-7.60.0
+ENV CURL_SOURCE=curl-7.64.1
 RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
 RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
 # Build cURL
 # we need to set the path for openssl with --with-ssl=...
 WORKDIR /${WORK_ROOT}/${CURL_SOURCE}
-RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --with-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
+RUN ./configure --with-sysroot=${TOOLCHAIN_SYSROOT} --prefix=${TOOLCHAIN_PREFIX} --target=${TOOLCHAIN_NAME} --with-ssl=${TOOLCHAIN_PREFIX} --without-zlib --host=${TOOLCHAIN_NAME} --build=x86_64-linux-gnu --enable-static --disable-shared 
 
 RUN make
 RUN make install
