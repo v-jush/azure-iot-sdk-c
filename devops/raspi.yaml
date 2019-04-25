@@ -77,15 +77,12 @@ jobs:
       artifactName: drop
       itemPattern: 'drop/**/*e2e_exe'
 
-  - task: Bash@3
-    inputs:
-      targetType: inline
-      script: |
-          chmod -R 777 drop
-          sudo setcap cap_net_raw,cap_net_admin+ep drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
-          drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
-      workingDirectory: '$(System.ArtifactsDirectory)'
-      displayName: 'Command Line Script'
+  - bash: |
+      chmod -R 777 drop
+      sudo setcap cap_net_raw,cap_net_admin+ep drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+      drop/source_artifacts/cmake/iothub_client/tests/iothubclient_mqtt_e2e/iothubclient_mqtt_e2e_exe
+    workingDirectory: '$(System.ArtifactsDirectory)'
+    displayName: 'Execute Test'
     env:
       IOTHUB_CONNECTION_STRING: $(IOTHUB-CONNECTION-STRING)
       IOTHUB_DEVICE_ID: $(IOTHUB-DEVICE-ID)
