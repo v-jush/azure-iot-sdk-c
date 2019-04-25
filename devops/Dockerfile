@@ -5,7 +5,7 @@ FROM debian:stretch
 RUN apt update && apt -y upgrade
 
 # Install wget git cmake xz-utils
-RUN apt install --fix-missing -y wget git build-essential pkg-config cmake libssl-dev uuid-dev xz-utils
+RUN apt-get install -y wget git cmake xz-utils
 
 # SSH Tools
 
@@ -32,7 +32,7 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
-ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
+ENV LINARO_SOURCE=gcc-linaro-7.3.1-2018.05-x86_64_arm-linux-gnueabihf
 RUN wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
 RUN tar -xvf ${LINARO_SOURCE}.tar.xz 
 
@@ -83,7 +83,7 @@ WORKDIR /${WORK_ROOT}
 #RUN ls -al ../RPiBuild
 
 # Download cURL source and expand it
-ENV CURL_SOURCE=curl-7.64.0
+ENV CURL_SOURCE=curl-7.60.0
 RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
 RUN tar -xvzf ${CURL_SOURCE}.tar.gz
 
