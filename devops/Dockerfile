@@ -32,6 +32,7 @@ RUN cat /root/.ssh/remote-debug.pub > /root/.ssh/authorized_keys
 ENV WORK_ROOT=/toolchain
 WORKDIR ${WORK_ROOT}
 
+########## LINARO INSTALL ##########
 ENV LINARO_SOURCE=gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabihf
 RUN wget https://releases.linaro.org/components/toolchain/binaries/7.4-2019.02/arm-linux-gnueabihf/${LINARO_SOURCE}.tar.xz
 RUN tar -xvf ${LINARO_SOURCE}.tar.xz 
@@ -54,6 +55,8 @@ ENV LDFLAGS="-L${TOOLCHAIN_SYSROOT}/usr/lib"
 ENV LIBS="-lssl -lcrypto -ldl -lpthread"
 ENV STAGING_DIR=${TOOLCHAIN_SYSROOT}
 
+
+########## OPENSSL INSTALL ##########
 # Download OpenSSL source and expand it
 ENV OPENSSL_SOURCE=openssl-1.1.0j
 RUN wget https://www.openssl.org/source/${OPENSSL_SOURCE}.tar.gz
@@ -68,20 +71,7 @@ RUN make install
 WORKDIR /${WORK_ROOT}
 
 
-# Download the Linux utilities for libuuid and expand it
-ENV UTIL_LINUX_SOURCE=util-linux-2.33-rc2
-RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
-RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
-
-# Build uuid
-WORKDIR /${WORK_ROOT}/${UTIL_LINUX_SOURCE}
-RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
-RUN make
-RUN make install
-WORKDIR /${WORK_ROOT}
-
-#RUN ls -al ../RPiBuild
-
+########## CURL INSTALL ##########
 # Download cURL source and expand it
 ENV CURL_SOURCE=curl-7.64.1
 RUN wget http://curl.haxx.se/download/${CURL_SOURCE}.tar.gz
@@ -97,6 +87,21 @@ RUN make install
 WORKDIR /${WORK_ROOT}
 
 
+########## UTIL LINUX INSTALL ##########
+# Download the Linux utilities for libuuid and expand it
+ENV UTIL_LINUX_SOURCE=util-linux-2.33-rc2
+RUN wget https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.32/${UTIL_LINUX_SOURCE}.tar.gz
+RUN tar -xvzf ${UTIL_LINUX_SOURCE}.tar.gz 
+
+# Build uuid
+WORKDIR /${WORK_ROOT}/${UTIL_LINUX_SOURCE}
+RUN ./configure --prefix=${TOOLCHAIN_PREFIX} --with-sysroot=${TOOLCHAIN_SYSROOT} --target=${TOOLCHAIN_NAME} --host=${TOOLCHAIN_NAME} --disable-all-programs  --disable-bash-completion --enable-libuuid
+RUN make
+RUN make install
+WORKDIR /${WORK_ROOT}
+
+
+########## CLIENT LIBRARY INSTALL ##########
 # clone azure  
 ARG CLIENTLIBRARY_REPO
 
