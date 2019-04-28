@@ -53,7 +53,7 @@ and removing calls to _DoWork will yield the same results. */
 #endif // SET_TRUSTED_CERT_IN_SAMPLES
 
 /* Paste in the your iothub connection string  */
-static const char* connectionString = "[device connection string]";
+static const char* connectionString = "HostName=peszpiothub.azure-devices.net;DeviceId=rasp_mist;SharedAccessKey=3mdy/PYwBlm7j0xNmDw++czP6msMit4crF5PrMFPLDk=";
 #define MESSAGE_COUNT        5
 static bool g_continueRunning = true;
 static size_t g_message_count_send_confirmations = 0;
